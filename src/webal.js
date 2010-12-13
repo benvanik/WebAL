@@ -52,17 +52,19 @@
 
         this._extensionList = [];
 
-        // TODO: pick a device based on support
-        //this.device = new WebALBrowserDevice(this);
-        //this.device = new WebALFlashDevice(this);
-        if (window.navigator.userAgent.indexOf("Firefox") > 0) {
-            this.device = new WebALNativeDevice(this);
+        // Pick a device based on support
+        var devices = [WebALNativeDevice, WebALFlashDevice, WebALNullDevice];
+        for (var n = 0; n < devices.length; n++) {
+            if (devices[n].detect() == true) {
+                // Device is supported! Create
+                this.device = devices[n].create(this);
+                break;
+            }
         }
 
-        // Fallback to null device
-        if (!this.device) {
-            this.device = new WebALNullDevice(this);
-        }
+        // Reset attributes to the real values used by the device
+        this.attributes.frequency = this.device.frequency;
+        this.attributes.channels = this.device.channels;
     };
 
     var constants = {
@@ -1781,6 +1783,22 @@
     };
 
     WebALSoftwareMixer.prototype.fillBuffer = function (target, sampleCapacity) {
+        var al = this.context;
+
+        // Scan for any active sources - if none (or none that have any data), abort
+        var anyActiveSources = false;
+        for (var n = 0; n < al.activeSources.length; n++) {
+            var source = al.activeSources[n];
+            if (source.buffer.data.length == 0) {
+                // Skip empty sources
+                continue;
+            }
+            anyActiveSources = true;
+        }
+        if (!anyActiveSources) {
+            return false;
+        }
+
         var samplesRemaining = sampleCapacity;
         while (samplesRemaining > 0) {
             var sampleCount = Math.min(samplesRemaining, BUFFERSIZE);
@@ -1789,6 +1807,8 @@
 
             samplesRemaining -= sampleCount;
         }
+
+        return true;
     };
 
     function lerp(val1, val2, mu) {
@@ -2068,7 +2088,7 @@
                     }
                 }
 
-                while ((queueIndex >= 0) && (queueIndex < source.queue.length - 1) && (bufferSize > 0)) {
+                while ((queueIndex >= 0) && (queueIndex < source.queue.length) && (bufferSize > 0)) {
                     var bufferItr = source.queue[queueIndex];
                     var dataSize1 = bufferItr.data.byteLength;
 
@@ -2209,6 +2229,7 @@
         this.refreshInterval = context ? context.attributes.refreshInterval : 0;
     };
 
+    // A reference null output when nothing is supported
     var WebALNullDevice = function (context) {
         var self = this;
         WebALDevice.apply(this, [context, "Null"]);
@@ -2228,32 +2249,94 @@
     };
     WebALNullDevice.prototype = new WebALDevice();
     WebALNullDevice.prototype.constructor = WebALNullDevice;
-
-    // TODO: an implementation that only supports <audio> tags
-    var WebALBrowserDevice = function (context) {
-        var self = this;
-        WebALDevice.apply(this, [context, "Browser"]);
-
-        window.setInterval(function () {
-            context._handleUpdates();
-        }, this.refreshInterval);
+    WebALNullDevice.detect = function () {
+        // Null device is always supported
+        return true;
+    }
+    WebALNullDevice.create = function (context) {
+        return new WebALNullDevice(context);
     };
-    WebALBrowserDevice.prototype = new WebALDevice();
-    WebALBrowserDevice.prototype.constructor = WebALBrowserDevice;
 
-    // TODO: an implementation using Flash for when HTML5 audio is not supported
+    // An implementation using Flash for when HTML5 audio is not supported
     var WebALFlashDevice = function (context) {
         var self = this;
         WebALDevice.apply(this, [context, "Flash"]);
 
+        // Flash only supports 2 channel 44100hz
+        this.channels = 2;
+        this.frequency = 44100;
+        this.updateSize = 8192 / this.channels;
+
+        this.sampleCapacity = this.updateSize;
+        this.buffer = new Float32Array(this.sampleCapacity * this.channels);
+
         this.mixer = new WebALSoftwareMixer(context, this);
 
-        window.setInterval(function () {
-            context._handleUpdates();
-        }, this.refreshInterval);
+        // Create a wrapper div in the document (Flash has to live somewhere)
+        var wrapper = document.createElement("div");
+        wrapper.style.position = "fixed";
+        wrapper.style.width = wrapper.style.height = "8px";
+        wrapper.style.left = wrapper.style.bottom = "0px";
+        wrapper.style.overflow = "hidden";
+        var container = document.createElement("div");
+        container.id = "webal-flash-device";
+        wrapper.appendChild(container);
+        document.body.appendChild(wrapper);
+
+        // Load the SWF
+        swfobject.embedSWF(
+            "../../lib/webal_flash_device.swf",
+            container.id,
+            "8", "8",
+            "9.0.0",
+            null,
+            null,
+            { "allowScriptAccess": "always" },
+            null,
+            function (e) {
+                self.flashObject = e.ref;
+            }
+        );
     };
     WebALFlashDevice.prototype = new WebALDevice();
     WebALFlashDevice.prototype.constructor = WebALFlashDevice;
+    WebALFlashDevice.detect = function () {
+        if (!window["swfobject"]) {
+            // No loader
+            return false;
+        }
+        // TODO: ensure Flash is enabled/etc
+        return true;
+    }
+    WebALFlashDevice.create = function (context) {
+        return new WebALFlashDevice(context);
+    };
+
+    // Called by the Flash widget to populate data
+    // Data is returned as *shudder* a string
+    window.__webal_flash_device_sampleQuery = function () {
+        var al = WebAL.getContext();
+        var device = al.device;
+
+        al._handleUpdates();
+
+        // Demand fill the buffer with samples
+        if (device.mixer.fillBuffer(device.buffer, device.sampleCapacity) == false) {
+            // Fast path for silence
+            return null;
+        }
+
+        // Convert to string & return
+        // TODO: faster - Typed Array's have no join() though
+        var sampleString = "";
+        for (var n = 0; n < device.buffer.length; n++) {
+            sampleString += device.buffer[n];
+            if (n < device.buffer.length - 1) {
+                sampleString += " ";
+            }
+        }
+        return sampleString;
+    };
 
     // TODO: an implementation using the mozWriteAudio API
     var WebALNativeDevice = function (context) {
@@ -2269,21 +2352,27 @@
         this.mixer = new WebALSoftwareMixer(context, this);
 
         function writeData() {
+            var buffer = self.buffer;
             while (self.audioEl.mozCurrentSampleOffset() / self.channels + prebufferSize >= currentWritePosition) {
 
                 // HACK: DUMMY PULSE
                 function writeDummyPulse(t) {
                     var k = 2 * Math.PI * 440 / self.frequency;
                     for (var i = 0; i < sampleCapacity; i++) {
-                        self.buffer[i] = Math.sin(k * (i + t));
+                        buffer[i] = Math.sin(k * (i + t));
                     }
                 }
                 //writeDummyPulse(currentWritePosition);
 
                 // Demand fill the buffer with samples
-                self.mixer.fillBuffer(self.buffer, sampleCapacity);
+                if (self.mixer.fillBuffer(buffer, sampleCapacity) == false) {
+                    // Silence - zero the buffer
+                    for (var n = 0; n < buffer.length; n++) {
+                        buffer[n] = 0.0;
+                    }
+                }
 
-                self.audioEl.mozWriteAudio(self.buffer);
+                self.audioEl.mozWriteAudio(buffer);
                 currentWritePosition += sampleCapacity;
             }
         };
@@ -2301,6 +2390,19 @@
     };
     WebALNativeDevice.prototype = new WebALDevice();
     WebALNativeDevice.prototype.constructor = WebALNativeDevice;
+    WebALNativeDevice.detect = function () {
+        // Ensure browser supports Audio with the Mozilla writing APIs
+        if (typeof Audio !== "undefined") {
+            var audio = new Audio();
+            if (audio.mozSetup) {
+                return true;
+            }
+        }
+        return false;
+    };
+    WebALNativeDevice.create = function (context) {
+        return new WebALNativeDevice(context);
+    };
 
 
 
