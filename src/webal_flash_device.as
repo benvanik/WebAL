@@ -27,6 +27,8 @@ package {
             this.sound = new Sound();
             this.sound.addEventListener(SampleDataEvent.SAMPLE_DATA, sampleQuery);
             this.sound.play();
+
+            ExternalInterface.call("__webal_flash_device_ready");
         }
 
         private function sampleQuery (event : SampleDataEvent) : void {

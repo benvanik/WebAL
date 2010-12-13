@@ -2244,7 +2244,7 @@
         // Flash only supports 2 channel 44100hz
         this.channels = 2;
         this.frequency = 44100;
-        this.updateSize = 8192 / this.channels;
+        this.updateSize = 4096 / this.channels;
 
         this.sampleCapacity = this.updateSize;
         this.buffer = new WebALFloatArray(this.sampleCapacity * this.channels);
@@ -2287,11 +2287,6 @@
                 null,
                 function (e) {
                     self.flashObject = e.ref;
-
-                    var queuedCall;
-                    while (queuedCall = self.queuedCalls.shift()) {
-                        queuedCall();
-                    }
                 }
             );
         };
@@ -2354,7 +2349,7 @@
             self.flashObject.getAllAudioSamples(bufferId, url);
         };
 
-        if (this.flashObject) {
+        if (this.flashObject && this.flashObject["getAllAudioSamples"]) {
             processAudioBuffer();
         } else {
             this.queuedCalls.push(processAudioBuffer);
@@ -2362,6 +2357,17 @@
     };
     WebALFlashDevice.prototype.abortAudioBuffer = function (buffer) {
         // TODO: something?
+    };
+
+    // Called when the Flash widget is ready
+    window.__webal_flash_device_ready = function () {
+        var al = WebAL.getContext();
+        var device = al.device;
+
+        var queuedCall;
+        while (queuedCall = device.queuedCalls.shift()) {
+            queuedCall();
+        }
     };
 
     // Called by the Flash widget to populate data
@@ -2390,6 +2396,7 @@
         return sampleString;
     };
 
+    // Called when the contenst of an audio file have been extracted
     window.__webal_flash_device_completedAudioSamples = function (bufferId, sampleCount, bufferString) {
         var al = WebAL.getContext();
 
