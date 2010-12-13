@@ -73,7 +73,8 @@ Creating a Context
 There is a shared WebALContext per document. You can cache the context or make the call to retreive it as much as you want.
     var al = WebAL.getContext();
 
-Optionally you can pass an object defining a set of attributes to request from the device implementation.
+Optionally you can pass an object defining a set of attributes to request from the device implementation. Use `getContextAttributes()`
+after creation to query the values actually used by the underlying implementation (which may differ from the ones you asked for).
     var attrs = {
         // Frequency for mixing output buffer, in units of Hz
         frequency: 44100,
