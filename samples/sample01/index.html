@@ -9,7 +9,15 @@
 
             // Use the browser to load the audio
             var audioEl = new Audio();
-            audioEl.src = "../content/invincible.ogg";
+            var srcmp3 = document.createElement("source")
+            srcmp3.src = "../content/invincible.mp3";
+            srcmp3.type = "audio/mpeg";
+            audioEl.appendChild(srcmp3);
+            var srcogg = document.createElement("source");
+            srcogg.src = "../content/invincible.ogg";
+            srcogg.type = "audio/ogg";
+            audioEl.appendChild(srcogg);
+            //audioEl.src = "../content/invincible.ogg";
 
             // Setup buffer with the audio element
             var buffer = al.createBuffer();

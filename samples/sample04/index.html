@@ -9,13 +9,13 @@
 
             var contentPath = "../content/";
             var soundFiles = [
-                "1up.ogg",
-                "bonus.ogg",
-                "coin.ogg",
-                "gameover.ogg",
-                "invincible.ogg",
-                "jump.ogg",
-                "timewarning.ogg"
+                "1up",
+                "bonus",
+                "coin",
+                "gameover",
+                "invincible",
+                "jump",
+                "timewarning"
             ];
 
             var sources = [];
@@ -24,7 +24,15 @@
 
                 // Use the browser to load the audio
                 var audioEl = new Audio();
-                audioEl.src = soundSrc;
+                var srcmp3 = document.createElement("source")
+                srcmp3.src = soundSrc + ".mp3";
+                srcmp3.type = "audio/mpeg";
+                audioEl.appendChild(srcmp3);
+                var srcogg = document.createElement("source");
+                srcogg.src = soundSrc + ".ogg";
+                srcogg.type = "audio/ogg";
+                audioEl.appendChild(srcogg);
+                //audioEl.src = soundSrc + ".ogg";
 
                 // Setup buffer with the audio element
                 var buffer = al.createBuffer();
@@ -37,17 +45,20 @@
                 sources.push(source);
             }
 
-            document.addEventListener("keypress", function (e) {
-                if ((e.charCode >= 48) && (e.charCode <= 57)) {
-                    var index = e.charCode - 48;
+            document.addEventListener("keydown", function (e) {
+                var code = e.keyCode || e.charCode;
+                if ((code >= 48) && (code <= 57)) {
+                    var index = code - 48;
                     if (index >= sources.length) {
                         return;
                     }
 
                     var source = sources[index];
 
-                    if (al.getSourceParameter(source, al.STATE) == al.PLAYING) {
-                        // Stop playing
+                    var isPlaying = (al.getSourceParameter(source, al.SOURCE_STATE) == al.PLAYING);
+                    var isLooping = (al.getSourceParameter(source, al.LOOPING) == true);
+                    if (isPlaying && isLooping) {
+                        // Stop looping sounds
                         al.sourceStop(source);
                     } else {
                         // Loop if ctrl is down
