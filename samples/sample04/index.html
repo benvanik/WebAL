@@ -1,0 +1,74 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <title>WebAL Sample 04</title>
+    <script type="text/javascript" src="../../src/webal.js"></script>
+    <script type="text/javascript">
+        function DocumentLoaded() {
+            var al = WebAL.getContext();
+
+            var contentPath = "../content/";
+            var soundFiles = [
+                "1up.ogg",
+                "bonus.ogg",
+                "coin.ogg",
+                "gameover.ogg",
+                "invincible.ogg",
+                "jump.ogg",
+                "timewarning.ogg"
+            ];
+
+            var sources = [];
+            for (var n = 0; n < soundFiles.length; n++) {
+                var soundSrc = contentPath + soundFiles[n];
+
+                // Use the browser to load the audio
+                var audioEl = new Audio();
+                audioEl.src = soundSrc;
+
+                // Setup buffer with the audio element
+                var buffer = al.createBuffer();
+                al.bufferData(buffer, audioEl);
+
+                // Bind buffer to source
+                var source = al.createSource();
+                al.sourceBuffer(source, buffer);
+
+                sources.push(source);
+            }
+
+            document.addEventListener("keypress", function (e) {
+                if ((e.charCode >= 48) && (e.charCode <= 57)) {
+                    var index = e.charCode - 48;
+                    if (index >= sources.length) {
+                        return;
+                    }
+
+                    var source = sources[index];
+
+                    if (al.getSourceParameter(source, al.STATE) == al.PLAYING) {
+                        // Stop playing
+                        al.sourceStop(source);
+                    } else {
+                        // Loop if ctrl is down
+                        if (e.ctrlKey) {
+                            al.sourceParameter(source, al.LOOPING, true);
+                        } else {
+                            al.sourceParameter(source, al.LOOPING, false);
+                        }
+
+                        // Rewind and play again
+                        al.sourceRewind(source);
+                        al.sourcePlay(source);
+                    }
+
+                    e.preventDefault();
+                }
+            }, false);
+        };
+    </script>
+</head>
+<body onload="DocumentLoaded();">
+    Use the number keys to play sounds. Hold ctrl to play with looping.
+</body>
+</html>
