@@ -8,6 +8,7 @@
             var al = WebAL.getContext();
 
             // Audio properties
+            var bufferCount = 4;
             var channelCount = 1;
             var frequency = 44100;
             var bufferSize = frequency / 10 * channelCount;
@@ -39,7 +40,7 @@
 
             // Setup buffers with initial data
             var buffers = [];
-            for (var n = 0; n < 2; n++) {
+            for (var n = 0; n < bufferCount; n++) {
                 var data = generateChunk(writePosition);
                 writePosition += data.length;
 
