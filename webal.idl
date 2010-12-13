@@ -81,6 +81,7 @@ module webal {
         const ALenum CONE_OUTER_GAIN                    = 0x1022;
         const ALenum MAX_DISTANCE                       = 0x1023;
 
+        const ALenum LOADED                             = 0x2000;
         const ALenum FREQUENCY                          = 0x2001;
         const ALenum BITS                               = 0x2002;
         const ALenum CHANNELS                           = 0x2003;
@@ -151,7 +152,7 @@ module webal {
         void bufferParameter(WebALBuffer buffer, ALenum pname, any param);
         any getBufferParameter(WebALBuffer buffer, ALenum pname);
 
-        void bufferData(WebALBuffer buffer, HTMLAudioElement audio);
+        void bufferData(WebALBuffer buffer, HTMLAudioElement audio, ALboolean streaming);
         void bufferData(WebALBuffer buffer, ALenum format, ArrayBuffer data, ALint frequency);
 
         void sourceBuffer(WebALSource source, WebALBuffer buffer);

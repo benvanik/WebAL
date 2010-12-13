@@ -15,7 +15,7 @@ Features
 * Full software mixer (limits on sound playback scale linearly with the number of active sounds)
 * 3D positional audio
 * Streaming sources for low-level dynamic audio generation
-* Support for <audio> sources (FF only)
+* Support for `<audio>` sources (FF only)
 * Flash fallback for browsers without direct audio writing
 
 Credits
@@ -45,7 +45,7 @@ Known Issues/TODO
 * Massive performance pass required (lots of extra loops/copies/etc)
 * Need fallback support for browsers missing Typed Array support
 * Need Flash fallback widget for non-Firefox browsers
-* <audio> tag read support only works in Firefox
+* `<audio>` tag read support only works in Firefox
 * Implement a device that targets [Web Audio](http://chromium.googlecode.com/svn/trunk/samples/audio/specification/specification.html)
 * Reduce playback latency if possible (using the 'auto latency detection' sample from MDC)
 * Need a query on buffers to see if they have been loaded
@@ -149,7 +149,7 @@ Playing Multiple Sounds (sample04)
 WebAL has a mixer built in - that means that you can play multiple sounds at the same time and they will all be mixed together. Doing this
 is as simple as just calling `al.sourcePlay()` on your sources as you want them to start playing!
 
-check out the sample for a demonstration of this as well as some examples of querying source states/etc.
+Check out the sample for a demonstration of this as well as some examples of querying source states/etc.
 
 Samples Coming Soon
 --------------------
@@ -160,8 +160,8 @@ Notes
 ====================
 * 3D positional audio only works on mono sources - all but gain is ignored on stereo sources
 * For performance reasons use mono output (see 'Creating a Context' above) if your sound effects don't require stereo
-* Long-playing audio, such as music, should use the browser native <audio> tag - the mixer is designed for sound effects!
-* Streaming support for audio from <audio> elements is not yet implemented - the entire buffer must be loaded - you can still play the sound, it'll just be silent
+* Long-playing audio, such as music, should use the browser native `<audio>` tag - the mixer is designed for sound effects!
+* Streaming support for audio from `<audio>` elements is not yet implemented - the entire buffer must be loaded - you can still play the sound, it'll just be silent
 * Creating buffers is expensive - do it at load time or very infrequently
 * Creating sources is cheap, but try to cache them if possible
 * The sound may not be loaded by the first play - put the `sourcePlay` call in a button handler to see it work

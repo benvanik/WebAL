@@ -118,6 +118,7 @@
         CONE_OUTER_GAIN: 0x1022,
         MAX_DISTANCE: 0x1023,
 
+        LOADED: 0x2000,
         FREQUENCY: 0x2001,
         BITS: 0x2002,
         CHANNELS: 0x2003,
@@ -155,7 +156,8 @@
     }
 
     WebALContext.prototype.getContextAttributes = function () {
-        return this.attributes;
+        // Clone so that modifications don't hurt us
+        return new WebALContextAttributes(this.attributes);
     };
 
     WebALContext.prototype.getSupportedExtensions = function () {
@@ -800,6 +802,8 @@
             return null;
         }
         switch (pname) {
+            case this.LOADED:
+                return buffer.data && (buffer.data.length > 0);
             case this.FREQUENCY:
                 return buffer.frequency;
             case this.BITS:
@@ -824,16 +828,21 @@
 
     WebALContext.prototype.bufferData = function (buffer) {
         // Supports:
-        // bufferData(buffer, <audio>)
+        // bufferData(buffer, <audio>, streaming = false)
         // bufferData(buffer, format, data, frequency)
         if (!buffer) {
             this._setError(this.INVALID_NAME);
             return;
         }
 
-        if (arguments.length == 2) {
-            // bufferData(buffer, <audio>)
-            buffer._setAudioData(arguments[1]);
+        if ((arguments.length == 2) || (arguments.length == 3)) {
+            // bufferData(buffer, <audio>, streaming = false)
+            var audioEl = arguments[1];
+            var streaming = false;
+            if (arguments.length >= 3) {
+                streaming = arguments[2] ? true : false;
+            }
+            buffer._setAudioData(audioEl, streaming);
         } else if (arguments.length == 4) {
             // bufferData(buffer, format, data, frequency)
             var format = arguments[1];
@@ -1548,7 +1557,7 @@
         }
     };
 
-    WebALBuffer.prototype._setAudioData = function (audioElement) {
+    WebALBuffer.prototype._setAudioData = function (audioElement, streaming) {
         var self = this;
         var al = this.context;
         this._unbindData();
@@ -1570,6 +1579,11 @@
 
         // TODO: to support streaming, we may want to use multiple buffers and queue them up
         // Not sure how well the rest of my hacky impl will support sub-realtime loading, though
+        if (streaming) {
+            // TODO: support streaming
+        } else {
+            // Static
+        }
 
         function audioLoadedMetadata(e) {
             self.frequency = audioElement.mozSampleRate;
