@@ -48,6 +48,7 @@ Known Issues/TODO
 * <audio> tag read support only works in Firefox
 * Implement a device that targets [Web Audio](http://chromium.googlecode.com/svn/trunk/samples/audio/specification/specification.html)
 * Reduce playback latency if possible (using the 'auto latency detection' sample from MDC)
+* Need a query on buffers to see if they have been loaded
 
 Browser Support
 ====================
@@ -109,10 +110,6 @@ Let's say you want to just load a simple sound to play occasionally:
 
     // Play the sound
     al.sourcePlay(source);
-Some things to note about this sample are:
-* Creating buffers is expensive - do it at load time or very infrequently
-* Creating sources is cheap, but try to cache them if possible
-* The sound may not be loaded by the first play - put the `sourcePlay` call in a button handler to see it work
 
 Generating Sound Pt. 1 (sample02)
 --------------------
@@ -165,4 +162,6 @@ Notes
 * For performance reasons use mono output (see 'Creating a Context' above) if your sound effects don't require stereo
 * Long-playing audio, such as music, should use the browser native <audio> tag - the mixer is designed for sound effects!
 * Streaming support for audio from <audio> elements is not yet implemented - the entire buffer must be loaded - you can still play the sound, it'll just be silent
-
+* Creating buffers is expensive - do it at load time or very infrequently
+* Creating sources is cheap, but try to cache them if possible
+* The sound may not be loaded by the first play - put the `sourcePlay` call in a button handler to see it work
