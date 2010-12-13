@@ -1524,6 +1524,7 @@
     };
 
     WebALBuffer.prototype._setAudioData = function (audioElement) {
+        var self = this;
         var al = this.context;
         this._unbindData();
 
@@ -1538,10 +1539,56 @@
         // TODO: listen for the MozAudioAvailable event
         // https://developer.mozilla.org/en/Introducing_the_Audio_API_Extension
 
-        // TODO: possible to get most of these values in FF:
-        // mozChannels = # of channels
-        // mozSampleRate = samples/sec
-        // mozFrameBufferLength = # of samples in all channels
+        this.data = new Float32Array(0);
+
+        var partialData = null;
+
+        // TODO: to support streaming, we may want to use multiple buffers and queue them up
+        // Not sure how well the rest of my hacky impl will support sub-realtime loading, though
+
+        function audioLoadedMetadata(e) {
+            self.frequency = audioElement.mozSampleRate;
+            self.originalChannels = self.channels = audioElement.mozChannels;
+            self.originalType = self.type = FLOAT;
+            self.bits = 32;
+
+            // 98304 frames
+            // 2.2160000801086426 duration
+            // 1 channel
+            // 44100 samplerate
+            // 2.2xx*44100 = 97725.60353279113866
+            var duration = audioElement.duration;
+            var sampleCount = Math.round(duration * self.frequency);
+            partialData = new Float32Array(sampleCount);
+
+            console.log(e);
+        };
+
+        var writeOffset = 0;
+        function audioAvailable(e) {
+            var fb = e.frameBuffer;
+
+            console.log(writeOffset);
+
+            var validSamples = Math.min(partialData.length - writeOffset, fb.length);
+            for (var n = 0; n < validSamples; n++) {
+                partialData[writeOffset + n] = fb[n];
+            }
+
+            writeOffset += fb.length;
+
+            if (writeOffset > partialData.length) {
+                // Done!
+                self.data = partialData;
+                self.loopEnd = self.data.byteLength / self.channels / self.type;
+            }
+        };
+
+        audioElement.addEventListener("loadedmetadata", audioLoadedMetadata, false);
+        audioElement.addEventListener("MozAudioAvailable", audioAvailable, false);
+
+        audioElement.muted = true;
+        audioElement.play();
     };
 
     WebALBuffer.prototype._setRawData = function (sourceFormat, sourceData, frequency) {
@@ -1674,6 +1721,10 @@
         // Mix in all samples
         for (var n = 0; n < al.activeSources.length; n++) {
             var source = al.activeSources[n];
+            if (source.buffer.data.length == 0) {
+                // Skip empty sources
+                continue;
+            }
             this.mixSource(source, sampleCount);
         }
 
