@@ -94,13 +94,17 @@ Let's say you want to just load a simple sound to play occasionally:
     // Create a browser <audio> element to get ogg decoding for free
     var audioEl = new Audio();
     audioEl.src = "myeffect.ogg";
+
     // Create the buffer and bind the <audio> element to it
     var buffer = al.createBuffer();
     al.bufferData(buffer, audioEl);
+
     // Create the audio source and associate the buffer with it
     var source = al.createSource();
     source.sourceBuffer(source, buffer);
+
     // ... at some point in the future ...
+
     // Play the sound
     al.sourcePlay(source);
 Some things to note about this sample are:
@@ -113,10 +117,12 @@ Generating Sound Pt. 1 (sample02)
 If you are generating your own sound in code (via one of the great JS audio libraries out there) you can easily play it:
     // Create the sound data somehow
     var data = new Float32Array(...);
+
     // TODO: generate data!
     // Setup buffer (with appropriate format for the source data and frequency)
     var buffer = al.createBuffer();
     al.bufferData(buffer, al.FORMAT_MONO_FLOAT32, data, 44100);
+
     // Create source and play!
     var source = al.createSource();
     al.sourceBuffer(source, buffer);
