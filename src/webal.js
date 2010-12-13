@@ -2264,7 +2264,7 @@
 
         // Prebuffer
         var currentWritePosition = 0;
-        var prebufferSize = this.frequency / 2;
+        var prebufferSize = this.frequency / 2 / this.channels / 2;
         writeData();
 
         window.setInterval(function () {
