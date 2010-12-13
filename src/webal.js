@@ -20,7 +20,7 @@
     var WebALContextAttributes = function (source) {
         this.frequency = (source && source.frequency) ? source.frequency : 44100;
         this.refreshInterval = (source && source.refreshInterval) ? source.refreshInterval : 16;
-        this.channels = (source && source.channels) ? source.channels : 1;
+        this.channels = (source && source.channels) ? source.channels : 2;
 
         // Validate
         this.frequency = Math.max(this.frequency, 1);
@@ -2247,7 +2247,7 @@
         this.mixer = new WebALSoftwareMixer(context, this);
 
         function writeData() {
-            while (self.audioEl.mozCurrentSampleOffset() + prebufferSize >= currentWritePosition) {
+            while (self.audioEl.mozCurrentSampleOffset() / self.channels + prebufferSize >= currentWritePosition) {
 
                 // HACK: DUMMY PULSE
                 function writeDummyPulse(t) {
