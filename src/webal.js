@@ -1,6 +1,35 @@
 (function () {
     var exports = window;
 
+    // Hacky support for browsers that don't support Typed Arrays yet
+    var WebALFloatArray;
+    if (typeof Float32Array !== "undefined") {
+        WebALFloatArray = Float32Array;
+    } else {
+        WebALFloatArray = function (size) {
+            var result = [];
+            if (typeof size === "number") {
+                if (size) {
+                    // First expand to the right size then zero fill
+                    result[size - 1] = 0.0;
+                    for (var n = 0; n < size; n++) {
+                        result[n] = 0.0;
+                    }
+                }
+            } else {
+                var source = size;
+                if (source.length) {
+                    result[source.length - 1] = 0.0;
+                    for (var n = 0; n < source.length; n++) {
+                        result[n] = source[n];
+                    }
+                }
+            }
+            result.byteLength = result.length * 4;
+            return result;
+        };
+    }
+
     var WebAL = {
         sharedContext: null
     };
@@ -1575,7 +1604,7 @@
         // TODO: listen for the MozAudioAvailable event
         // https://developer.mozilla.org/en/Introducing_the_Audio_API_Extension
 
-        this.data = new Float32Array(0);
+        this.data = new Array(0);
 
         var partialData = null;
 
@@ -1600,7 +1629,7 @@
             // 2.2xx*44100 = 97725.60353279113866
             var duration = audioElement.duration;
             var sampleCount = Math.round(duration * self.frequency);
-            partialData = new Float32Array(sampleCount);
+            partialData = new WebALFloatArray(sampleCount);
         };
 
         var writeOffset = 0;
@@ -1694,13 +1723,13 @@
         if ((sourceChannels == targetChannels) && (sourceType == targetType) && (sourceFormat == targetFormat)) {
             // Copy
 
-            targetData = new Float32Array(sourceData);
+            targetData = new WebALFloatArray(sourceData);
         } else {
             // Convert
 
             // Allocate new storage
             var sampleCount = (sourceData.byteLength / sourceType);
-            targetData = new Float32Array(sampleCount);
+            targetData = new WebALFloatArray(sampleCount);
 
             // Convert data
             // NOTE: we know we are always going to FLOAT32
@@ -1741,10 +1770,10 @@
         this.channels = device.channels;
         this.dryBuffer = new Array(MAXCHANNELS);
         for (var n = 0; n < MAXCHANNELS; n++) {
-            this.dryBuffer[n] = new Float32Array(BUFFERSIZE * this.channels);
+            this.dryBuffer[n] = new WebALFloatArray(BUFFERSIZE * this.channels);
         }
 
-        this.scratchBuffer = new Float32Array(STACK_DATA_SIZE / 4);
+        this.scratchBuffer = new WebALFloatArray(STACK_DATA_SIZE / 4);
     };
 
     WebALSoftwareMixer.prototype.write = function (target, sampleCount) {
@@ -2235,7 +2264,7 @@
         WebALDevice.apply(this, [context, "Null"]);
 
         var sampleCapacity = this.updateSize;
-        this.buffer = new Float32Array(sampleCapacity * this.channels);
+        this.buffer = new WebALFloatArray(sampleCapacity * this.channels);
 
         this.mixer = new WebALSoftwareMixer(context, this);
 
@@ -2268,7 +2297,7 @@
         this.updateSize = 8192 / this.channels;
 
         this.sampleCapacity = this.updateSize;
-        this.buffer = new Float32Array(this.sampleCapacity * this.channels);
+        this.buffer = new WebALFloatArray(this.sampleCapacity * this.channels);
 
         this.mixer = new WebALSoftwareMixer(context, this);
 
@@ -2367,7 +2396,7 @@
         this.audioEl.mozSetup(this.channels, this.frequency);
 
         var sampleCapacity = this.updateSize;
-        this.buffer = new Float32Array(sampleCapacity * this.channels);
+        this.buffer = new WebALFloatArray(sampleCapacity * this.channels);
 
         this.mixer = new WebALSoftwareMixer(context, this);
 
