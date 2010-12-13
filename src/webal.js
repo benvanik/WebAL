@@ -2283,28 +2283,48 @@
         wrapper.appendChild(container);
         document.body.appendChild(wrapper);
 
-        // Load the SWF
-        swfobject.embedSWF(
-            "../../lib/webal_flash_device.swf",
-            container.id,
-            "8", "8",
-            "9.0.0",
-            null,
-            null,
-            { "allowScriptAccess": "always" },
-            null,
-            function (e) {
-                self.flashObject = e.ref;
+        var hasInsertedFlash = false;
+        function swfobjectReady() {
+            if (hasInsertedFlash) {
+                return;
             }
-        );
+            hasInsertedFlash = true;
+
+            // Load the SWF
+            swfobject.embedSWF(
+                "../../lib/webal_flash_device.swf",
+                container.id,
+                "8", "8",
+                "9.0.0",
+                null,
+                null,
+                { "allowScriptAccess": "always" },
+                null,
+                function (e) {
+                    self.flashObject = e.ref;
+                }
+            );
+        };
+
+        // Load swfobject if required
+        if (window["swfobject"]) {
+            swfobjectReady();
+        } else {
+            var swfscript = document.createElement("script");
+            swfscript.type = "text/javascript";
+            swfscript.src = "http://ajax.googleapis.com/ajax/libs/swfobject/2.2/swfobject.js";
+            swfscript.onreadystatechange = function () {
+                if (!hasInsertedFlash && window["swfobject"]) {
+                    swfobjectReady();
+                }
+            };
+            swfscript.onload = swfobjectReady;
+            document.head.appendChild(swfscript);
+        }
     };
     WebALFlashDevice.prototype = new WebALDevice();
     WebALFlashDevice.prototype.constructor = WebALFlashDevice;
     WebALFlashDevice.detect = function () {
-        if (!window["swfobject"]) {
-            // No loader
-            return false;
-        }
         // TODO: ensure Flash is enabled/etc
         return true;
     }
