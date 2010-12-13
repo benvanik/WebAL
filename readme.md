@@ -41,10 +41,8 @@ would be to actually get the spec published like WebGL ^_^
 Known Issues/TODO
 ====================
 * All 2D/3D options are untested (need samples)
-* sample03 (buffer queueing) doesn't work right
 * Massive performance pass required (lots of extra loops/copies/etc)
 * Need fallback support for browsers missing Typed Array support
-* Need Flash fallback widget for non-Firefox browsers
 * `<audio>` tag read support only works in Firefox
 * Implement a device that targets [Web Audio](http://chromium.googlecode.com/svn/trunk/samples/audio/specification/specification.html)
 * Reduce playback latency if possible (using the 'auto latency detection' sample from MDC)
