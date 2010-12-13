@@ -108,9 +108,9 @@
 
         FORMAT_MONO8: 0x1100,
         FORMAT_MONO16: 0x1101,
+        FORMAT_MONO_FLOAT32: 0x10010,
         FORMAT_STEREO8: 0x1102,
         FORMAT_STEREO16: 0x1103,
-        FORMAT_MONO_FLOAT32: 0x10010,
         FORMAT_STEREO_FLOAT32: 0x10011,
 
         REFERENCE_DISTANCE: 0x1020,
@@ -153,6 +153,18 @@
     for (var n in constants) {
         WebALContext.prototype[n] = constants[n];
     }
+
+    WebALContext.prototype.getContextAttributes = function () {
+        return this.attributes;
+    };
+
+    WebALContext.prototype.getSupportedExtensions = function () {
+        return [];
+    };
+
+    WebALContext.prototype.getExtension = function (name) {
+        return null;
+    };
 
     WebALContext.prototype._handleUpdates = function () {
         for (var n = 0; n < this.activeSources.length; n++) {

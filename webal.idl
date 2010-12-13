@@ -1,0 +1,160 @@
+module webal {
+
+    typedef html::HTMLAudioElement HTMLAudioElement;
+    typedef typedarrays::ArrayBuffer ArrayBuffer;
+
+    typedef unsigned long   ALenum;
+    typedef boolean         ALboolean;
+    typedef int             ALint;
+    typedef float           ALfloat;
+
+    interface WebALContextAttributes {
+        attribute int frequency;
+        attribute int refreshInterval;
+        attribute int channels;
+    };
+
+    interface WebALObject {
+    };
+
+    interface WebALBuffer : WebALObject {
+    };
+
+    interface WebALSource : WebALObject {
+    };
+
+    interface WebALContext {
+
+        const ALenum INVALID                            = -1;
+        const ALenum NONE                               = 0;
+        const ALenum FALSE                              = 0;
+        const ALenum TRUE                               = 1;
+
+        const ALenum SOURCE_RELATIVE                    = 0x202;
+        const ALenum CONE_INNER_ANGLE                   = 0x1001;
+        const ALenum CONE_OUTER_ANGLE                   = 0x1002;
+        const ALenum PITCH                              = 0x1003;
+
+        const ALenum POSITION                           = 0x1004;
+        const ALenum DIRECTION                          = 0x1005;
+        const ALenum VELOCITY                           = 0x1006;
+
+        const ALenum LOOPING                            = 0x1007;
+        const ALenum BUFFER                             = 0x1009;
+
+        const ALenum GAIN                               = 0x100A;
+        const ALenum MIN_GAIN                           = 0x100D;
+        const ALenum MAX_GAIN                           = 0x100E;
+        const ALenum ORIENTATION                        = 0x100F;
+
+        const ALenum SOURCE_STATE                       = 0x1010;
+        const ALenum INITIAL                            = 0x1011;
+        const ALenum PLAYING                            = 0x1012;
+        const ALenum PAUSED                             = 0x1013;
+        const ALenum STOPPED                            = 0x1014;
+
+        const ALenum BUFFERS_QUEUED                     = 0x1015;
+        const ALenum BUFFERS_PROCESSED                  = 0x1016;
+
+        const ALenum SEC_OFFSET                         = 0x1024;
+        const ALenum SAMPLE_OFFSET                      = 0x1025;
+        const ALenum BYTE_OFFSET                        = 0x1026;
+
+        const ALenum SOURCE_TYPE                        = 0x1027;
+        const ALenum STATIC                             = 0x1028;
+        const ALenum STREAMING                          = 0x1029;
+        const ALenum UNDETERMINED                       = 0x1030;
+
+        const ALenum FORMAT_MONO8                       = 0x1100;
+        const ALenum FORMAT_MONO16                      = 0x1101;
+        const ALenum FORMAT_MONO_FLOAT32                = 0x10010;
+        const ALenum FORMAT_STEREO8                     = 0x1102;
+        const ALenum FORMAT_STEREO16                    = 0x1103;
+        const ALenum FORMAT_STEREO_FLOAT32              = 0x10011;
+
+        const ALenum REFERENCE_DISTANCE                 = 0x1020;
+        const ALenum ROLLOFF_FACTOR                     = 0x1021;
+        const ALenum CONE_OUTER_GAIN                    = 0x1022;
+        const ALenum MAX_DISTANCE                       = 0x1023;
+
+        const ALenum FREQUENCY                          = 0x2001;
+        const ALenum BITS                               = 0x2002;
+        const ALenum CHANNELS                           = 0x2003;
+        const ALenum SIZE                               = 0x2004;
+
+        const ALenum UNUSED                             = 0x2010;
+        const ALenum QUEUED                             = 0x2011;
+        const ALenum CURRENT                            = 0x2012;
+
+        const ALenum NO_ERROR                           = 0;
+        const ALenum INVALID_NAME                       = 0xA001;
+        const ALenum INVALID_ENUM                       = 0xA002;
+        const ALenum INVALID_VALUE                      = 0xA003;
+        const ALenum INVALID_OPERATION                  = 0xA004;
+        const ALenum OUT_OF_MEMORY                      = 0xA005;
+
+        const ALenum VENDOR                             = 0xB001;
+        const ALenum VERSION                            = 0xB002;
+        const ALenum RENDERER                           = 0xB003;
+        const ALenum EXTENSIONS                         = 0xB004;
+
+        const ALenum DOPPLER_FACTOR                     = 0xC000;
+        const ALenum SPEED_OF_SOUND                     = 0xC003;
+
+        const ALenum DISTANCE_MODEL                     = 0xD000;
+        const ALenum INVERSE_DISTANCE                   = 0xD001;
+        const ALenum INVERSE_DISTANCE_CLAMPED           = 0xD002;
+        const ALenum LINEAR_DISTANCE                    = 0xD003;
+        const ALenum LINEAR_DISTANCE_CLAMPED            = 0xD004;
+        const ALenum EXPONENT_DISTANCE                  = 0xD005;
+        const ALenum EXPONENT_DISTANCE_CLAMPED          = 0xD006;
+
+        WebALContextAttributes getContextAttributes();
+
+        DOMString[ ] getSupportedExtensions();
+        object getExtension(DOMString name);
+
+        ALenum getError();
+
+        void enable(ALenum cap);
+        void disable(ALenum cap);
+        ALboolean isEnabled(ALenum cap);
+
+        void hint(ALenum target, ALenum mode);
+
+        any getParameter(ALenum pname);
+        void dopplerFactor(ALfloat value);
+        void speedOfSound(ALfloat value);
+        void distanceModel(ALenum value);
+
+        void listenerParameter(ALenum pname, any param);
+        any getListenerParameter(ALenum pname);
+
+        WebALSource createSource();
+        void deleteSource(WebALSource source);
+        ALboolean isSource(WebALSource source);
+        void sourceParameter(WebALSource source, ALenum pname, any param);
+        any getSourceParameter(WebALSource source, ALenum pname);
+
+        void sourcePlay(WebALSource source);
+        void sourceStop(WebALSource source);
+        void sourceRewind(WebALSource source);
+        void sourcePause(WebALSource source);
+
+        WebALBuffer createBuffer();
+        void deleteBuffer(WebALBuffer buffer);
+        ALboolean isBuffer(WebALBuffer buffer);
+        void bufferParameter(WebALBuffer buffer, ALenum pname, any param);
+        any getBufferParameter(WebALBuffer buffer, ALenum pname);
+
+        void bufferData(WebALBuffer buffer, HTMLAudioElement audio);
+        void bufferData(WebALBuffer buffer, ALenum format, ArrayBuffer data, ALint frequency);
+
+        void sourceBuffer(WebALSource source, WebALBuffer buffer);
+        void sourceQueueBuffer(WebALSource source, WebALBuffer buffer);
+        void sourceQueueBuffers(WebALSource source, sequence<WebALBuffer> buffers);
+        WebALBuffer sourceUnqueueBuffer(WebALSource source);
+        sequence<WebALBuffer> sourceUnqueueBuffers(WebALSource source, ALint count);
+    };
+
+};
