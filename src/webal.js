@@ -5,8 +5,6 @@
         sharedContext: null
     };
     WebAL.getContext = function (attributes) {
-        // TODO: if attributes differ recreate the context?
-
         if (WebAL.sharedContext) {
             return WebAL.sharedContext;
         } else {
@@ -20,11 +18,17 @@
     };
 
     var WebALContextAttributes = function (source) {
-        this.frequency = (source && source.frequency) ? source.frequency : null;
-        this.refresh = (source && source.refresh) ? source.refresh : null;
-        this.sync = (source && source.sync) ? source.sync : null;
-        this.monoSources = (source && source.monoSources) ? source.monoSources : null;
-        this.stereoSources = (source && source.stereoSources) ? source.stereoSources : null;
+        this.frequency = (source && source.frequency) ? source.frequency : 44100;
+        this.refreshInterval = (source && source.refreshInterval) ? source.refreshInterval : 16;
+        this.channels = (source && source.channels) ? source.channels : 1;
+
+        // Validate
+        this.frequency = Math.max(this.frequency, 1);
+        this.frequency = Math.min(this.frequency, 1000000);
+        this.refreshInterval = Math.max(this.refreshInterval, 1);
+        this.refreshInterval = Math.min(this.refreshInterval, 1000);
+        this.channels = Math.max(this.channels, 1);
+        this.channels = Math.min(this.channels, 2);
     };
 
     var WebALContext = function (attributes) {
@@ -742,11 +746,12 @@
             return;
         }
 
-        if (buffer.referenceCount > 0) {
+        if (buffer.referencingSources.length > 0) {
             // Sources still using this buffer - cannot delete
             this._setError(this.INVALID_OPERATION);
             return;
         }
+        buffer.referencingSources.length = 0;
 
         buffer.data = null;
         buffer.isAlive = false;
@@ -860,7 +865,7 @@
             source.buffersQueued = 1;
 
             // Increment reference count
-            buffer.referenceCount++;
+            buffer.referencingSources.push(source);
         } else {
             source.type = this.UNDETERMINED;
         }
@@ -910,7 +915,7 @@
         // Ready - add to the queue
         for (var n = 0; n < buffers.length; n++) {
             var buffer = buffers[n];
-            buffer.referenceCount++;
+            buffer.referencingSources.push(source);
             source.queue.push(buffer);
         }
 
@@ -948,7 +953,7 @@
 
         for (var n = 0; n < count; n++) {
             var buffer = source.queue.shift();
-            buffer.referenceCount--;
+            buffer.referencingSources.splice(buffer.referencingSources.indexOf(source), 1);
             buffers.push(buffer);
             source.buffersQueued--;
         }
@@ -1057,7 +1062,7 @@
     WebALSource.prototype._drainQueue = function () {
         for (var n = 0; n < this.queue.length; n++) {
             var buffer = this.queue[n];
-            buffer.referenceCount--;
+            buffer.referencingSources.splice(buffer.referencingSources.indexOf(this), 1);
         }
         this.queue.length = 0;
     };
@@ -1498,7 +1503,8 @@
         this.loopStart = 0;
         this.loopEnd = 0;
 
-        this.referenceCount = 0; // # of sources using the buffer (to prevent deletion)
+        // Current sources using this buffer (used to track reference count as well as handle invalidations)
+        this.referencingSources = [];
     };
     WebALBuffer.prototype = new WebALObject();
     WebALBuffer.prototype.constructor = WebALBuffer;
@@ -1521,6 +1527,13 @@
 
         this.loopStart = 0;
         this.loopEnd = 0;
+    };
+
+    WebALBuffer.prototype._invalidateSources = function () {
+        for (var n = 0; n < this.referencingSources.length; n++) {
+            var source = this.referencingSources[n];
+            source.needsUpdate = true;
+        }
     };
 
     WebALBuffer.prototype._setAudioData = function (audioElement) {
@@ -1581,6 +1594,8 @@
                 // Done!
                 self.data = partialData;
                 self.loopEnd = self.data.byteLength / self.channels / self.type;
+
+                self._invalidateSources();
             }
         };
 
@@ -2165,24 +2180,29 @@
         this.context = context;
         this.name = name;
 
-        this.channels = 2;
-        this.frequency = 44100;
+        this.channels = context ? context.attributes.channels : 0;
+        this.frequency = context ? context.attributes.frequency : 0;
         this.updateSize = 1024; // TODO: better choice
+
+        this.refreshInterval = context ? context.attributes.refreshInterval : 0;
     };
 
     var WebALNullDevice = function (context) {
         var self = this;
         WebALDevice.apply(this, [context, "Null"]);
 
+        var sampleCapacity = this.updateSize;
+        this.buffer = new Float32Array(sampleCapacity * this.channels);
+
         this.mixer = new WebALSoftwareMixer(context, this);
 
         window.setInterval(function () {
             context._handleUpdates();
 
-            var sampleCapacity = 4096;
-            var buffer = new Float32Array(sampleCapacity * self.channels);
-            self.mixer.fillBuffer(buffer, sampleCapacity);
-        }, 100);
+            self.mixer.fillBuffer(self.buffer, sampleCapacity);
+
+            // ?
+        }, this.refreshInterval);
     };
     WebALNullDevice.prototype = new WebALDevice();
     WebALNullDevice.prototype.constructor = WebALNullDevice;
@@ -2194,7 +2214,7 @@
 
         window.setInterval(function () {
             context._handleUpdates();
-        }, 100);
+        }, this.refreshInterval);
     };
     WebALBrowserDevice.prototype = new WebALDevice();
     WebALBrowserDevice.prototype.constructor = WebALBrowserDevice;
@@ -2208,7 +2228,7 @@
 
         window.setInterval(function () {
             context._handleUpdates();
-        }, 100);
+        }, this.refreshInterval);
     };
     WebALFlashDevice.prototype = new WebALDevice();
     WebALFlashDevice.prototype.constructor = WebALFlashDevice;
@@ -2218,12 +2238,10 @@
         var self = this;
         WebALDevice.apply(this, [context, "Native"]);
 
-        this.channels = 1;
-
         this.audioEl = new Audio();
         this.audioEl.mozSetup(this.channels, this.frequency);
 
-        var sampleCapacity = 1024;
+        var sampleCapacity = this.updateSize;
         this.buffer = new Float32Array(sampleCapacity * this.channels);
 
         this.mixer = new WebALSoftwareMixer(context, this);
@@ -2257,7 +2275,7 @@
             context._handleUpdates();
 
             writeData();
-        }, 60);
+        }, this.refreshInterval);
     };
     WebALNativeDevice.prototype = new WebALDevice();
     WebALNativeDevice.prototype.constructor = WebALNativeDevice;
