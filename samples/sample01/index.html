@@ -7,16 +7,20 @@
         function DocumentLoaded() {
             var al = WebAL.getContext();
 
-            var buffer = al.createBuffer();
-
+            // Use the browser to load the audio
             var audioEl = new Audio();
             audioEl.src = "../content/invincible.ogg";
+
+            // Setup buffer with the audio element
+            var buffer = al.createBuffer();
             al.bufferData(buffer, audioEl);
 
+            // Create the source
             var source = al.createSource();
             al.sourceBuffer(source, buffer);
             al.sourceParameter(source, al.LOOPING, true);
 
+            // Start playback (looping)
             al.sourcePlay(source);
         };
     </script>

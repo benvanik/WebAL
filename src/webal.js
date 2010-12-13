@@ -1546,7 +1546,7 @@
         }
 
         // TODO: setup bindings
-        console.log("would bind audio data");
+        //console.log("would bind audio data");
 
         // TODO: listen for loadedmetadata event
         // TODO: listen for the MozAudioAvailable event
@@ -1573,15 +1573,11 @@
             var duration = audioElement.duration;
             var sampleCount = Math.round(duration * self.frequency);
             partialData = new Float32Array(sampleCount);
-
-            console.log(e);
         };
 
         var writeOffset = 0;
         function audioAvailable(e) {
             var fb = e.frameBuffer;
-
-            console.log(writeOffset);
 
             var validSamples = Math.min(partialData.length - writeOffset, fb.length);
             for (var n = 0; n < validSamples; n++) {

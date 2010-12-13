@@ -1,0 +1,90 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <title>WebAL Sample 03</title>
+    <script type="text/javascript" src="../../src/webal.js"></script>
+    <script type="text/javascript">
+        function DocumentLoaded() {
+            var al = WebAL.getContext();
+
+            // Audio properties
+            var channelCount = 1;
+            var frequency = 44100;
+            var bufferSize = frequency / 10 * channelCount;
+            var format = (channelCount == 1) ? al.FORMAT_MONO_FLOAT32 : al.FORMAT_STEREO_FLOAT32;
+
+            // Generate a chunk of audio
+            function generateChunk(position) {
+                var data = new Float32Array(bufferSize);
+                var k = 2 * Math.PI * 440 / frequency;
+                if (channelCount == 1) {
+                    // Mono
+                    for (var n = 0; n < bufferSize; n++) {
+                        data[n] = Math.sin(k * (n + position));
+                    }
+                } else {
+                    // Stereo
+                    var d = 0;
+                    for (var n = 0; n < bufferSize / 2; n++) {
+                        var value = Math.sin(k * (n + position));
+                        // TODO: check to see if the mixer should be doing this automatically
+                        data[d++] = value / 2.0;
+                        data[d++] = value / 2.0;
+                    }
+                }
+                return data;
+            };
+
+            var writePosition = 0;
+
+            // Setup buffers with initial data
+            var buffers = [];
+            for (var n = 0; n < 2; n++) {
+                var data = generateChunk(writePosition);
+                writePosition += data.length;
+
+                var buffer = al.createBuffer();
+                al.bufferData(buffer, format, data, frequency);
+                buffers.push(buffer);
+            }
+
+            // Create the source and queue the buffers
+            var source = al.createSource();
+            al.sourceQueueBuffers(source, buffers);
+
+            // Start playback
+            al.sourcePlay(source);
+
+            // Method to populate new data when required
+            function tick() {
+                // See if any buffers are done being used yet
+                var buffersProcessed = al.getSourceParameter(source, al.BUFFERS_PROCESSED);
+                if (buffersProcessed <= 0) {
+                    return;
+                }
+
+                // Shift out used buffers and fill them with new data
+                while (buffersProcessed--) {
+                    var data = generateChunk(writePosition);
+                    writePosition += data.length;
+
+                    var buffers = al.sourceUnqueueBuffers(source, 1);
+                    al.bufferData(buffers[0], format, data, frequency);
+
+                    // Add buffer back to source queue
+                    al.sourceQueueBuffers(source, buffers);
+                }
+
+                // Ghetto looping behavior
+                if (al.getSourceParameter(source, al.SOURCE_STATE) != al.PLAYING) {
+                    al.sourcePlay(source);
+                }
+            };
+            var tickInterval = 1000 * (bufferSize / frequency);
+            window.setInterval(tick, tickInterval);
+        };
+    </script>
+</head>
+<body onload="DocumentLoaded();">
+</body>
+</html>
