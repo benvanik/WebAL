@@ -41,7 +41,7 @@ package {
                 }
             } else {
                 // No data returned - no sounds playing? Fast path for silence
-                for (var n : int = 0; n < 8192; n++) {
+                for (var n : int = 0; n < 4096; n++) {
                     event.data.writeFloat(0.0);
                 }
             }
