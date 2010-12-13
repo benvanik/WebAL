@@ -63,6 +63,8 @@ Design
 The library is designed to be as close to the OpenAL 1.1 specification as possible. Where possible I borrowed from the WebGL spec to keep
 the two APIs as consistent as possible (for example, with the naming of get*Parameter/etc calls and type collapsing).
 
+Check out the `webal.idl` file to see what the API looks like.
+
 **TODO**: more design notes
 
 Getting Started
