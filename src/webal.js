@@ -30,6 +30,8 @@
         };
     }
 
+
+
     var WebAL = {
         sharedContext: null
     };
@@ -2457,5 +2459,8 @@
 
 
     exports.WebAL = WebAL;
+
+    // HACK: only because I'm lazy
+    exports.WebALFloatArray = WebALFloatArray;
 
 })();
