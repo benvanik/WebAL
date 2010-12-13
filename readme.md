@@ -91,9 +91,17 @@ There are two primary objects in the OpenAL world - buffers and sources. Buffers
 emitters that create sound. You can attach one or more buffers to a source and the same buffer can be attached to multiple sources.
 
 Let's say you want to just load a simple sound to play occasionally:
-    // Create a browser <audio> element to get ogg decoding for free
+    // Create a browser <audio> element
     var audioEl = new Audio();
-    audioEl.src = "myeffect.ogg";
+    // Note that to support all browsers we must provide both ogg and mp3 versions of the content
+    var srcmp3 = document.createElement("source");
+    srcmp3.type = "audio/mpeg";
+    srcmp3.src = "myeffect.mp3";
+    audioEl.appendChild(srcmp3);
+    var srcogg = document.createElement("source");
+    srcogg.type = "audio/mpeg";
+    srcogg.src = "myeffect.ogg";
+    audioEl.appendChild(srcogg);
 
     // Create the buffer and bind the <audio> element to it
     var buffer = al.createBuffer();
