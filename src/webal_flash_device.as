@@ -11,15 +11,19 @@
 package {
     import flash.display.Sprite;
     import flash.external.ExternalInterface;
+    import flash.events.Event;
+    import flash.net.URLRequest;
+    import flash.utils.ByteArray;
 
     import flash.media.Sound;
     import flash.events.SampleDataEvent;
-
 
     public class webal_flash_device extends Sprite {
         private var sound : Sound;
         
         public function webal_flash_device () {
+            ExternalInterface.addCallback("getAllAudioSamples", getAllAudioSamples);
+
             this.sound = new Sound();
             this.sound.addEventListener(SampleDataEvent.SAMPLE_DATA, sampleQuery);
             this.sound.play();
@@ -41,5 +45,30 @@ package {
             }
         }
 
+        public function getAllAudioSamples (bufferId : int, url : String) : void {
+            var request : URLRequest = new URLRequest(url);
+            var requestSound : Sound = new Sound();
+            requestSound.addEventListener(Event.COMPLETE, function () : void {
+                var sampleCount : int = Math.round(requestSound.length * 44100 / 1000);
+                var buffer : ByteArray = new ByteArray();
+                requestSound.extract(buffer, sampleCount);
+
+                // Call back into javascript with the buffer bytes
+                buffer.position = 0;
+                var bufferString : String = "";
+                for (var n : int = 0; n < sampleCount * 2; n++) {
+                    bufferString += String(buffer.readFloat());
+                    if (n != sampleCount * 2 - 1) {
+                        bufferString += " ";
+                    }
+                }
+                ExternalInterface.call("__webal_flash_device_completedAudioSamples", bufferId, sampleCount, bufferString);
+
+                requestSound.removeEventListener(Event.COMPLETE, arguments.callee);
+            });
+            requestSound.load(request);
+        };
+
+        // TODO: streaming
     };
 };

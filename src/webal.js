@@ -1557,6 +1557,8 @@
         this.loopStart = 0;
         this.loopEnd = 0;
 
+        this.isAudioSource = false;
+
         // Current sources using this buffer (used to track reference count as well as handle invalidations)
         this.referencingSources = [];
     };
@@ -1564,10 +1566,8 @@
     WebALBuffer.prototype.constructor = WebALBuffer;
 
     WebALBuffer.prototype._unbindData = function () {
-        if (this.data) {
-            // If a previous audio element set, unbind
-            // TODO: unbind
-            //console.log("would unbind audio data");
+        if (this.isAudioSource) {
+            this.context.device.abortAudioBuffer(this);
         }
 
         this.data = null;
@@ -1581,6 +1581,8 @@
 
         this.loopStart = 0;
         this.loopEnd = 0;
+
+        this.isAudioSource = false;
     };
 
     WebALBuffer.prototype._invalidateSources = function () {
@@ -1591,74 +1593,16 @@
     };
 
     WebALBuffer.prototype._setAudioData = function (audioElement, streaming) {
-        var self = this;
-        var al = this.context;
         this._unbindData();
 
         if (!audioElement) {
             return;
         }
 
-        // TODO: setup bindings
-        //console.log("would bind audio data");
-
-        // TODO: listen for loadedmetadata event
-        // TODO: listen for the MozAudioAvailable event
-        // https://developer.mozilla.org/en/Introducing_the_Audio_API_Extension
-
         this.data = new Array(0);
 
-        var partialData = null;
-
-        // TODO: to support streaming, we may want to use multiple buffers and queue them up
-        // Not sure how well the rest of my hacky impl will support sub-realtime loading, though
-        if (streaming) {
-            // TODO: support streaming
-        } else {
-            // Static
-        }
-
-        function audioLoadedMetadata(e) {
-            self.frequency = audioElement.mozSampleRate;
-            self.originalChannels = self.channels = audioElement.mozChannels;
-            self.originalType = self.type = FLOAT;
-            self.bits = 32;
-
-            // 98304 frames
-            // 2.2160000801086426 duration
-            // 1 channel
-            // 44100 samplerate
-            // 2.2xx*44100 = 97725.60353279113866
-            var duration = audioElement.duration;
-            var sampleCount = Math.round(duration * self.frequency);
-            partialData = new WebALFloatArray(sampleCount);
-        };
-
-        var writeOffset = 0;
-        function audioAvailable(e) {
-            var fb = e.frameBuffer;
-
-            var validSamples = Math.min(partialData.length - writeOffset, fb.length);
-            for (var n = 0; n < validSamples; n++) {
-                partialData[writeOffset + n] = fb[n];
-            }
-
-            writeOffset += fb.length;
-
-            if (writeOffset > partialData.length) {
-                // Done!
-                self.data = partialData;
-                self.loopEnd = self.data.byteLength / self.channels / self.type;
-
-                self._invalidateSources();
-            }
-        };
-
-        audioElement.addEventListener("loadedmetadata", audioLoadedMetadata, false);
-        audioElement.addEventListener("MozAudioAvailable", audioAvailable, false);
-
-        audioElement.muted = true;
-        audioElement.play();
+        this.isAudioSource = true;
+        this.context.device.setupAudioBuffer(this, audioElement, streaming);
     };
 
     WebALBuffer.prototype._setRawData = function (sourceFormat, sourceData, frequency) {
@@ -2287,6 +2231,10 @@
     WebALNullDevice.create = function (context) {
         return new WebALNullDevice(context);
     };
+    WebALNullDevice.prototype.setupAudioBuffer = function (buffer, audioElement, streaming) {
+    };
+    WebALNullDevice.prototype.abortAudioBuffer = function (buffer) {
+    };
 
     // An implementation using Flash for when HTML5 audio is not supported
     var WebALFlashDevice = function (context) {
@@ -2300,6 +2248,12 @@
 
         this.sampleCapacity = this.updateSize;
         this.buffer = new WebALFloatArray(this.sampleCapacity * this.channels);
+
+        this.bufferRequests = {};
+        this.bufferRequestId = 0;
+
+        // A list of calls waiting to execute when the flash is ready
+        this.queuedCalls = [];
 
         this.mixer = new WebALSoftwareMixer(context, this);
 
@@ -2326,13 +2280,18 @@
                 "../../lib/webal_flash_device.swf",
                 container.id,
                 "8", "8",
-                "9.0.0",
+                "10.0.0",
                 null,
                 null,
                 { "allowScriptAccess": "always" },
                 null,
                 function (e) {
                     self.flashObject = e.ref;
+
+                    var queuedCall;
+                    while (queuedCall = self.queuedCalls.shift()) {
+                        queuedCall();
+                    }
                 }
             );
         };
@@ -2362,6 +2321,48 @@
     WebALFlashDevice.create = function (context) {
         return new WebALFlashDevice(context);
     };
+    WebALFlashDevice.prototype.setupAudioBuffer = function (buffer, audioElement, streaming) {
+        var self = this;
+
+        buffer.frequency = 44100;
+        buffer.originalChannels = buffer.channels = 2;
+        buffer.originalType = buffer.type = FLOAT;
+        buffer.bits = 32;
+
+        function processAudioBuffer() {
+            // Get a supported URL
+            var url = null;
+            var sources = audioElement.getElementsByTagName("source");
+            if (sources && sources.length) {
+                for (var n = 0; n < sources.length; n++) {
+                    var source = sources[n];
+                    if (source.type == "audio/mpeg") {
+                        // Always prefer MP3
+                        url = source.src;
+                        break;
+                    }
+                    url = source.src; // will use this if required, but probably won't work
+                }
+            } else {
+                // Take the only thing we have
+                url = audioElement.src;
+            }
+
+            // Queue and kick off the processing
+            var bufferId = self.bufferRequestId++;
+            self.bufferRequests[bufferId] = buffer;
+            self.flashObject.getAllAudioSamples(bufferId, url);
+        };
+
+        if (this.flashObject) {
+            processAudioBuffer();
+        } else {
+            this.queuedCalls.push(processAudioBuffer);
+        }
+    };
+    WebALFlashDevice.prototype.abortAudioBuffer = function (buffer) {
+        // TODO: something?
+    };
 
     // Called by the Flash widget to populate data
     // Data is returned as *shudder* a string
@@ -2387,6 +2388,26 @@
             }
         }
         return sampleString;
+    };
+
+    window.__webal_flash_device_completedAudioSamples = function (bufferId, sampleCount, bufferString) {
+        var al = WebAL.getContext();
+
+        // Lookup the buffer
+        var buffer = al.device.bufferRequests[bufferId];
+        al.device.bufferRequests[bufferId] = null;
+
+        buffer.data = new WebALFloatArray(sampleCount * 2);
+
+        // TODO: faster conversion back to floats
+        var bufferSplit = bufferString.split(" ");
+        for (var n = 0; n < bufferSplit.length; n++) {
+            buffer.data[n] = Number(bufferSplit[n]);
+        }
+
+        buffer.loopEnd = buffer.data.byteLength / buffer.channels / buffer.type;
+
+        buffer._invalidateSources();
     };
 
     // TODO: an implementation using the mozWriteAudio API
@@ -2453,6 +2474,64 @@
     };
     WebALNativeDevice.create = function (context) {
         return new WebALNativeDevice(context);
+    };
+    WebALNativeDevice.prototype.setupAudioBuffer = function (buffer, audioElement, streaming) {
+        // https://developer.mozilla.org/en/Introducing_the_Audio_API_Extension
+
+        var partialData = null;
+
+        // TODO: to support streaming, we may want to use multiple buffers and queue them up
+        // Not sure how well the rest of my hacky impl will support sub-realtime loading, though
+        if (streaming) {
+            // TODO: support streaming
+        } else {
+            // Static
+        }
+
+        function audioLoadedMetadata(e) {
+            buffer.frequency = audioElement.mozSampleRate;
+            buffer.originalChannels = buffer.channels = audioElement.mozChannels;
+            buffer.originalType = buffer.type = FLOAT;
+            buffer.bits = 32;
+
+            // 98304 frames
+            // 2.2160000801086426 duration
+            // 1 channel
+            // 44100 samplerate
+            // 2.2xx*44100 = 97725.60353279113866
+            var duration = audioElement.duration;
+            var sampleCount = Math.round(duration * buffer.frequency);
+            partialData = new WebALFloatArray(sampleCount);
+        };
+
+        var writeOffset = 0;
+        function audioAvailable(e) {
+            var fb = e.frameBuffer;
+
+            var validSamples = Math.min(partialData.length - writeOffset, fb.length);
+            for (var n = 0; n < validSamples; n++) {
+                partialData[writeOffset + n] = fb[n];
+            }
+
+            writeOffset += fb.length;
+
+            if (writeOffset > partialData.length) {
+                // Done!
+                buffer.data = partialData;
+                buffer.loopEnd = buffer.data.byteLength / buffer.channels / buffer.type;
+
+                buffer._invalidateSources();
+            }
+        };
+
+        audioElement.addEventListener("loadedmetadata", audioLoadedMetadata, false);
+        audioElement.addEventListener("MozAudioAvailable", audioAvailable, false);
+
+        audioElement.muted = true;
+        audioElement.play();
+    };
+    WebALNativeDevice.prototype.abortAudioBuffer = function (buffer) {
+        // TODO: something? stop the audio element?
     };
 
 
