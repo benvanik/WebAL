@@ -1,0 +1,73 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <title>WebAL Sample 05</title>
+    <script type="text/javascript" src="../../src/webal.js"></script>
+    <script type="text/javascript">
+        function DocumentLoaded() {
+            var al = WebAL.getContext();
+
+            // Use the browser to load the audio
+            var audioEl = new Audio();
+            var srcmp3 = document.createElement("source")
+            srcmp3.src = "../content/invincible.mp3";
+            srcmp3.type = "audio/mpeg";
+            audioEl.appendChild(srcmp3);
+            var srcogg = document.createElement("source");
+            srcogg.src = "../content/invincible.ogg";
+            srcogg.type = "audio/ogg";
+            audioEl.appendChild(srcogg);
+            //audioEl.src = "../content/invincible.ogg";
+
+            // Setup buffer with the audio element
+            var buffer = al.createBuffer();
+            al.bufferData(buffer, audioEl);
+
+            // Create the source
+            var source = al.createSource();
+            al.sourceBuffer(source, buffer);
+            al.sourceParameter(source, al.LOOPING, true);
+
+            // Start playback (looping)
+            al.sourcePlay(source);
+
+            // Gain slider
+            var gainSlider = document.getElementById("gainSlider");
+            gainSlider.value = al.getSourceParameter(source, al.GAIN) * 100.0;
+            gainSlider.addEventListener("change", function () {
+                al.sourceParameter(source, al.GAIN, gainSlider.value / 100.0);
+            }, false);
+
+            // X slider
+            var xSlider = document.getElementById("xSlider");
+            xSlider.value = al.getSourceParameter(source, al.POSITION)[0];
+            xSlider.addEventListener("change", function () {
+                var oldPosition = al.getSourceParameter(source, al.POSITION);
+                al.sourceParameter(source, al.POSITION, [Number(xSlider.value), oldPosition[1], oldPosition[2]]);
+            }, false);
+
+            // Y slider
+            var ySlider = document.getElementById("ySlider");
+            ySlider.value = al.getSourceParameter(source, al.POSITION)[1];
+            ySlider.addEventListener("change", function () {
+                var oldPosition = al.getSourceParameter(source, al.POSITION);
+                al.sourceParameter(source, al.POSITION, [oldPosition[0], Number(ySlider.value), oldPosition[2]]);
+            }, false);
+
+            // Z slider
+            var zSlider = document.getElementById("zSlider");
+            zSlider.value = al.getSourceParameter(source, al.POSITION)[2];
+            zSlider.addEventListener("change", function () {
+                var oldPosition = al.getSourceParameter(source, al.POSITION);
+                al.sourceParameter(source, al.POSITION, [oldPosition[0], oldPosition[1], Number(zSlider.value)]);
+            }, false);
+        };
+    </script>
+</head>
+<body onload="DocumentLoaded();">
+    Gain: <input id="gainSlider" type="range" min="0" max="100" />
+    X: <input id="xSlider" type="range" min="-10" max="10" />
+    Y: <input id="ySlider" type="range" min="-10" max="10" />
+    Z: <input id="zSlider" type="range" min="-10" max="10" />
+</body>
+</html>
