@@ -5,6 +5,9 @@
         this.frequency = (source && source.frequency) ? source.frequency : 44100;
         this.refreshInterval = (source && source.refreshInterval) ? source.refreshInterval : 16;
         this.channels = (source && source.channels) ? source.channels : 2;
+        this.supportDynamicAudio = source ? source.supportDynamicAudio : true;
+        this.supportStreaming = source ? source.supportStreaming : true;
+        this.support3D = source ? source.support3D : true;
 
         // Validate
         this.frequency = Math.max(this.frequency, 1);
@@ -36,8 +39,15 @@
 
         this._extensionList = [];
 
-        // Pick a device based on support
-        var devices = [WebALNativeDevice, WebALFlashDevice, WebALBrowserDevice, WebALNullDevice];
+        // Pick a device based on detected support
+        var devices;
+        if (this.attributes.supportDynamicAudio || this.attributes.supportStreaming || this.attributes.support3D) {
+            // Requested full cap mode
+            devices = [WebALNativeDevice, WebALFlashDevice, WebALBrowserDevice, WebALNullDevice];
+        } else {
+            // Requested limited cap mode - try to use browser mixer over others
+            devices = [WebALBrowserDevice, WebALNativeDevice, WebALFlashDevice, WebALNullDevice];
+        }
         for (var n = 0; n < devices.length; n++) {
             if (devices[n].detect() == true) {
                 // Device is supported! Create

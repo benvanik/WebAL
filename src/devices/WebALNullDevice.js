@@ -6,6 +6,10 @@
         var self = this;
         WebALDevice.apply(this, [context, "Null"]);
 
+        this.context.attributes.supportDynamicAudio = true;
+        this.context.attributes.supportStreaming = true;
+        this.context.attributes.support3D = true;
+
         var sampleCapacity = this.updateSize;
         this.buffer = new WebALFloatArray(sampleCapacity * this.channels);
 

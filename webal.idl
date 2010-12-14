@@ -17,6 +17,9 @@ module webal {
         attribute int frequency;
         attribute int refreshInterval;
         attribute int channels;
+        attribute boolean supportDynamicAudio;
+        attribute boolean supportStreaming;
+        attribute boolean support3D;
     };
 
     interface WebAL {
