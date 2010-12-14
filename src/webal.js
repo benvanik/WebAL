@@ -2337,8 +2337,7 @@
         var self = this;
         WebALDevice.apply(this, [context, "Flash"]);
 
-        // Flash only supports 2 channel 44100hz
-        this.channels = 2;
+        // Flash only supports 2 channel 44100hz, but we can handle the channel thing
         this.frequency = 44100;
         this.updateSize = 4096 / this.channels;
 
@@ -2472,6 +2471,9 @@
     WebAL._flash_device_ready = function () {
         var al = WebAL.getContext();
         var device = al.device;
+
+        // Set output channel info
+        device.flashObject.setChannelCount(device.channels);
 
         var queuedCall;
         while (queuedCall = device.queuedCalls.shift()) {

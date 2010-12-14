@@ -20,8 +20,10 @@ package {
 
     public class webal_flash_device extends Sprite {
         private var sound : Sound;
-        
+        private var channelCount : int = 2;
+
         public function webal_flash_device () {
+            ExternalInterface.addCallback("setChannelCount", setChannelCount);
             ExternalInterface.addCallback("getAllAudioSamples", getAllAudioSamples);
 
             this.sound = new Sound();
@@ -31,13 +33,28 @@ package {
             ExternalInterface.call("WebAL._flash_device_ready");
         }
 
+        public function setChannelCount (channelCount : int) : void {
+            this.channelCount = channelCount;
+        }
+
         private function sampleQuery (event : SampleDataEvent) : void {
             // Call out to the host to get the data
             var sampleString : String = ExternalInterface.call("WebAL._flash_device_sampleQuery");
             if (sampleString) {
                 // Convert back into numbers and write to sample data buffer
-                for each (var sample : String in sampleString.split(" ")) {
-                    event.data.writeFloat(Number(sample));
+                var sample : String;
+                if (this.channelCount == 1) {
+                    // Mono stream - write samples duplicated
+                    for each (sample in sampleString.split(" ")) {
+                        var samp : Number = Number(sample);
+                        event.data.writeFloat(samp);
+                        event.data.writeFloat(samp);
+                    }
+                } else {
+                    // Stereo stream - write all samples
+                    for each (sample in sampleString.split(" ")) {
+                        event.data.writeFloat(Number(sample));
+                    }
                 }
             } else {
                 // No data returned - no sounds playing? Fast path for silence
