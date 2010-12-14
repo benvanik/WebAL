@@ -39,6 +39,10 @@ module webal {
         const ALenum FALSE                              = 0;
         const ALenum TRUE                               = 1;
 
+        const ALenum UBYTE                              = 1;
+        const ALenum SHORT                              = 2;
+        const ALenum FLOAT                              = 4;
+
         const ALenum SOURCE_RELATIVE                    = 0x202;
         const ALenum CONE_INNER_ANGLE                   = 0x1001;
         const ALenum CONE_OUTER_ANGLE                   = 0x1002;
