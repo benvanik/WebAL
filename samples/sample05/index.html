@@ -8,20 +8,14 @@
             var al = WebAL.getContext();
 
             // Use the browser to load the audio
-            var audioEl = new Audio();
-            var srcmp3 = document.createElement("source")
-            srcmp3.src = "../content/invincible.mp3";
-            srcmp3.type = "audio/mpeg";
-            audioEl.appendChild(srcmp3);
-            var srcogg = document.createElement("source");
-            srcogg.src = "../content/invincible.ogg";
-            srcogg.type = "audio/ogg";
-            audioEl.appendChild(srcogg);
-            //audioEl.src = "../content/invincible.ogg";
+            var audioRef = [
+                { type: "audio/mpeg", src: "../content/invincible.mp3" },
+                { type: "audio/ogg", src: "../content/invincible.ogg" }
+            ];
 
             // Setup buffer with the audio element
             var buffer = al.createBuffer();
-            al.bufferData(buffer, audioEl);
+            al.bufferData(buffer, audioRef, false);
 
             // Create the source
             var source = al.createSource();
@@ -66,8 +60,8 @@
 </head>
 <body onload="DocumentLoaded();">
     Gain: <input id="gainSlider" type="range" min="0" max="100" />
-    X: <input id="xSlider" type="range" min="-10" max="10" />
-    Y: <input id="ySlider" type="range" min="-10" max="10" />
-    Z: <input id="zSlider" type="range" min="-10" max="10" />
+    X: <input id="xSlider" type="range" min="-5" max="5" step="0.2" />
+    Y: <input id="ySlider" type="range" min="-5" max="5" step="0.2" />
+    Z: <input id="zSlider" type="range" min="-5" max="5" step="0.2" />
 </body>
 </html>

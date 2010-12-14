@@ -44,6 +44,8 @@ Known Issues/TODO
 * Massive performance pass required (lots of extra loops/copies/etc)
 * Reduce playback latency if possible (using the 'auto latency detection' sample from MDC)
 * Need a query on buffers to see if they have been loaded
+* Implement seeking/querying position on sources
+* You must provide both ogg and mp3 sources for your content (may be possible to do ogg decoding in Flash, but that seems hard)
 
 Browser Support
 ====================
@@ -90,21 +92,16 @@ There are two primary objects in the OpenAL world - buffers and sources. Buffers
 emitters that create sound. You can attach one or more buffers to a source and the same buffer can be attached to multiple sources.
 
 Let's say you want to just load a simple sound to play occasionally:
-    // Create a browser <audio> element
-    var audioEl = new Audio();
+    // Create an audio reference
     // Note that to support all browsers we must provide both ogg and mp3 versions of the content
-    var srcmp3 = document.createElement("source");
-    srcmp3.type = "audio/mpeg";
-    srcmp3.src = "myeffect.mp3";
-    audioEl.appendChild(srcmp3);
-    var srcogg = document.createElement("source");
-    srcogg.type = "audio/mpeg";
-    srcogg.src = "myeffect.ogg";
-    audioEl.appendChild(srcogg);
+    var audioRef = [
+        { type: "audio/mpeg", src: "myeffect.mp3" },
+        { type: "audio/ogg", src: "myeffect.ogg" }
+    ];
 
-    // Create the buffer and bind the <audio> element to it
+    // Create the buffer and bind the audio to it
     var buffer = al.createBuffer();
-    al.bufferData(buffer, audioEl);
+    al.bufferData(buffer, audioRef, false);
 
     // Create the audio source and associate the buffer with it
     var source = al.createSource();

@@ -8,6 +8,11 @@ module webal {
     typedef int             ALint;
     typedef float           ALfloat;
 
+    interface WebALAudioReference {
+        attribute DOMString type;
+        attribute DOMString url;
+    };
+
     interface WebALContextAttributes {
         attribute int frequency;
         attribute int refreshInterval;
@@ -153,6 +158,7 @@ module webal {
         any getBufferParameter(WebALBuffer buffer, ALenum pname);
 
         void bufferData(WebALBuffer buffer, HTMLAudioElement audio, ALboolean streaming);
+        void bufferData(WebALBuffer buffer, sequence<WebALAudioReference> audioRef, ALboolean streaming);
         void bufferData(WebALBuffer buffer, ALenum format, ArrayBuffer data, ALint frequency);
 
         void sourceBuffer(WebALSource source, WebALBuffer buffer);

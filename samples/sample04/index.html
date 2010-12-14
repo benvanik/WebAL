@@ -23,20 +23,14 @@
                 var soundSrc = contentPath + soundFiles[n];
 
                 // Use the browser to load the audio
-                var audioEl = new Audio();
-                var srcmp3 = document.createElement("source")
-                srcmp3.src = soundSrc + ".mp3";
-                srcmp3.type = "audio/mpeg";
-                audioEl.appendChild(srcmp3);
-                var srcogg = document.createElement("source");
-                srcogg.src = soundSrc + ".ogg";
-                srcogg.type = "audio/ogg";
-                audioEl.appendChild(srcogg);
-                //audioEl.src = soundSrc + ".ogg";
+                var audioRef = [
+                    { type: "audio/mpeg", src: soundSrc + ".mp3" },
+                    { type: "audio/ogg", src: soundSrc + ".ogg" }
+                ];
 
                 // Setup buffer with the audio element
                 var buffer = al.createBuffer();
-                al.bufferData(buffer, audioEl);
+                al.bufferData(buffer, audioRef, false);
 
                 // Bind buffer to source
                 var source = al.createSource();
