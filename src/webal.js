@@ -2360,7 +2360,7 @@
     };
 
     // Called when the Flash widget is ready
-    window.__webal_flash_device_ready = function () {
+    WebAL._flash_device_ready = function () {
         var al = WebAL.getContext();
         var device = al.device;
 
@@ -2372,7 +2372,7 @@
 
     // Called by the Flash widget to populate data
     // Data is returned as *shudder* a string
-    window.__webal_flash_device_sampleQuery = function () {
+    WebAL._flash_device_sampleQuery = function () {
         var al = WebAL.getContext();
         var device = al.device;
 
@@ -2397,14 +2397,15 @@
     };
 
     // Called when the contenst of an audio file have been extracted
-    window.__webal_flash_device_completedAudioSamples = function (bufferId, sampleCount, bufferString) {
+    WebAL._flash_device_completedAudioSamples = function (bufferId, channelCount, sampleCount, bufferString) {
         var al = WebAL.getContext();
 
         // Lookup the buffer
         var buffer = al.device.bufferRequests[bufferId];
         al.device.bufferRequests[bufferId] = null;
 
-        buffer.data = new WebALFloatArray(sampleCount * 2);
+        buffer.originalChannels = buffer.channels = channelCount;
+        buffer.data = new WebALFloatArray(sampleCount * channelCount);
 
         // TODO: faster conversion back to floats
         var bufferSplit = bufferString.split(" ");
@@ -2417,7 +2418,7 @@
         buffer._invalidateSources();
     };
 
-    // TODO: an implementation using the mozWriteAudio API
+    // An implementation using the mozWriteAudio API
     var WebALNativeDevice = function (context) {
         var self = this;
         WebALDevice.apply(this, [context, "Native"]);

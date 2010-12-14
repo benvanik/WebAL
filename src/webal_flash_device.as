@@ -28,12 +28,12 @@ package {
             this.sound.addEventListener(SampleDataEvent.SAMPLE_DATA, sampleQuery);
             this.sound.play();
 
-            ExternalInterface.call("__webal_flash_device_ready");
+            ExternalInterface.call("WebAL._flash_device_ready");
         }
 
         private function sampleQuery (event : SampleDataEvent) : void {
             // Call out to the host to get the data
-            var sampleString : String = ExternalInterface.call("__webal_flash_device_sampleQuery");
+            var sampleString : String = ExternalInterface.call("WebAL._flash_device_sampleQuery");
             if (sampleString) {
                 // Convert back into numbers and write to sample data buffer
                 for each (var sample : String in sampleString.split(" ")) {
@@ -51,20 +51,49 @@ package {
             var request : URLRequest = new URLRequest(url);
             var requestSound : Sound = new Sound();
             requestSound.addEventListener(Event.COMPLETE, function () : void {
+                var n : int;
+                
                 var sampleCount : int = Math.round(requestSound.length * 44100 / 1000);
                 var buffer : ByteArray = new ByteArray();
                 requestSound.extract(buffer, sampleCount);
 
-                // Call back into javascript with the buffer bytes
+                // Scan the buffer to see if the source was mono (pairs of samples are equal)
+                var anyDiffer : Boolean = false;
                 buffer.position = 0;
-                var bufferString : String = "";
-                for (var n : int = 0; n < sampleCount * 2; n++) {
-                    bufferString += String(buffer.readFloat());
-                    if (n != sampleCount * 2 - 1) {
-                        bufferString += " ";
+                for (n = 0; n < sampleCount * 2; n += 2) {
+                    var s1 : Number = buffer.readFloat();
+                    var s2 : Number = buffer.readFloat();
+                    if (s1 != s2) {
+                        anyDiffer = true;
+                        break;
                     }
                 }
-                ExternalInterface.call("__webal_flash_device_completedAudioSamples", bufferId, sampleCount, bufferString);
+
+                // If none differ the source was mono - otherwise stereo
+                var channelCount : int = anyDiffer ? 2 : 1;
+                var bufferString : String = "";
+                buffer.position = 0;
+                if (anyDiffer) {
+                    // Output full stereo stream
+                    for (n = 0; n < sampleCount * 2; n++) {
+                        bufferString += String(buffer.readFloat());
+                        if (n != sampleCount * 2 - 1) {
+                            bufferString += " ";
+                        }
+                    }
+                } else {
+                    // Output only every other sample (as mono)
+                    for (n = 0; n < sampleCount * 2; n += 2) {
+                        bufferString += String(buffer.readFloat());
+                        buffer.readFloat(); // skip other channel
+                        if (n < sampleCount * 2 - 2) {
+                            bufferString += " ";
+                        }
+                    }
+                }
+                
+                // Call back into javascript with the buffer bytes
+                ExternalInterface.call("WebAL._flash_device_completedAudioSamples", bufferId, channelCount, sampleCount, bufferString);
 
                 requestSound.removeEventListener(Event.COMPLETE, arguments.callee);
             });
