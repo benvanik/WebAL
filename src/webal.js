@@ -2482,27 +2482,34 @@
     // Called by the Flash widget to populate data
     // Data is returned as *shudder* a string
     WebAL._flash_device_sampleQuery = function () {
-        var al = WebAL.getContext();
-        var device = al.device;
+        try {
+            var al = WebAL.getContext();
+            var device = al.device;
 
-        al._handleUpdates();
+            al._handleUpdates();
 
-        // Demand fill the buffer with samples
-        if (device.mixer.fillBuffer(device.buffer, device.sampleCapacity) == false) {
-            // Fast path for silence
+            // Demand fill the buffer with samples
+            if (device.mixer.fillBuffer(device.buffer, device.sampleCapacity) == false) {
+                // Fast path for silence
+                return null;
+            }
+
+            // Convert to string & return
+            // TODO: faster - Typed Array's have no join() though
+            var sampleString = "";
+            for (var n = 0; n < device.buffer.length; n++) {
+                sampleString += device.buffer[n];
+                if (n < device.buffer.length - 1) {
+                    sampleString += " ";
+                }
+            }
+            return sampleString;
+        } catch (e) {
+            if (window["console"]) {
+                console.log("Exception in Flash callback: " + e);
+            }
             return null;
         }
-
-        // Convert to string & return
-        // TODO: faster - Typed Array's have no join() though
-        var sampleString = "";
-        for (var n = 0; n < device.buffer.length; n++) {
-            sampleString += device.buffer[n];
-            if (n < device.buffer.length - 1) {
-                sampleString += " ";
-            }
-        }
-        return sampleString;
     };
 
     // Called when the contenst of an audio file have been extracted
