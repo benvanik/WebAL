@@ -1179,8 +1179,8 @@
 
     function aluCrossproduct(v1, v2, ov) {
         ov[0] = v1[1] * v2[2] - v1[2] * v2[1];
-        ov[0] = v1[2] * v2[0] - v1[0] * v2[2];
-        ov[0] = v1[0] * v2[1] - v1[1] * v2[0];
+        ov[1] = v1[2] * v2[0] - v1[0] * v2[2];
+        ov[2] = v1[0] * v2[1] - v1[1] * v2[0];
     };
 
     function aluDotproduct(v1, v2) {
@@ -2418,7 +2418,7 @@
         buffer._invalidateSources();
     };
 
-    // An implementation using the mozWriteAudio API
+    // TODO: an implementation using the mozWriteAudio API
     var WebALNativeDevice = function (context) {
         var self = this;
         WebALDevice.apply(this, [context, "Native"]);
