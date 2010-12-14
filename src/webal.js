@@ -96,6 +96,8 @@
         // Reset attributes to the real values used by the device
         this.attributes.frequency = this.device.frequency;
         this.attributes.channels = this.device.channels;
+
+        initPanningLUT(this.device.channels);
     };
 
     var constants = {
@@ -1209,6 +1211,70 @@
         v[2] = x * m[M02] + y * m[M12] + z * m[M22] + w * m[M32];
     };
 
+    var QUADRANT_NUM = 128;
+    var LUT_NUM = 4 * QUADRANT_NUM;
+    function aluLUTpos2Angle(pos) {
+        if (pos < QUADRANT_NUM) {
+            return Math.atan(pos / (QUADRANT_NUM - pos));
+        }
+        if (pos < 2 * QUADRANT_NUM) {
+            return Math.PI / 2 + Math.atan((pos - QUADRANT_NUM) / (2 * QUADRANT_NUM - pos));
+        }
+        if (pos < 3 * QUADRANT_NUM) {
+            return Math.atan((pos - 2 * QUADRANT_NUM) / (3 * QUADRANT_NUM - pos)) - Math.PI;
+        }
+        return Math.atan((pos - 3 * QUADRANT_NUM) / (4 * QUADRANT_NUM - pos)) - Math.PI / 2;
+    };
+    function aluCart2LUTpos(re, im) {
+        var pos = 0;
+        var denom = Math.abs(re) + Math.abs(im);
+        if (denom > 0.0) {
+            pos = Math.floor(QUADRANT_NUM * Math.abs(im) / denom + 0.5);
+        }
+        if (re < 0.0) {
+            pos = 2 * QUADRANT_NUM - pos;
+        }
+        if (im < 0.0) {
+            pos = LUT_NUM - pos;
+        }
+        return pos % LUT_NUM;
+    };
+
+    var panningLUT = new WebALFloatArray(MAXCHANNELS * LUT_NUM);
+    function initPanningLUT(deviceChannels) {
+        if (deviceChannels == 1) {
+            for (var pos = 0; pos < LUT_NUM; pos++) {
+                var offset = MAXCHANNELS * pos;
+                for (var n = 0; n < MAXCHANNELS; n++) {
+                    panningLUT[offset + n] = 0.0;
+                }
+                panningLUT[offset + FRONT_CENTER] = 1.0;
+            }
+        } else if (deviceChannels == 2) {
+            var speakerAngle = [-90.0 * Math.PI / 180.0, 90.0 * Math.PI / 180.0];
+            for (var pos = 0; pos < LUT_NUM; pos++) {
+                var offset = MAXCHANNELS * pos;
+                for (var n = 0; n < MAXCHANNELS; n++) {
+                    panningLUT[offset + n] = 0.0;
+                }
+                var theta = aluLUTpos2Angle(pos);
+                // FRONT_LEFT
+                if ((theta >= speakerAngle[0]) && (theta < speakerAngle[1])) {
+                    var alpha = Math.PI / 2 * (theta - speakerAngle[0]) / (speakerAngle[1] - speakerAngle[0]);
+                    panningLUT[offset + FRONT_LEFT] = Math.cos(alpha);
+                    panningLUT[offset + FRONT_RIGHT] = Math.sin(alpha);
+                }
+                // FRONT_RIGHT
+                if (theta < speakerAngle[0]) {
+                    theta += 2.0 * Math.PI;
+                }
+                var alpha = Math.PI / 2 * (theta - speakerAngle[1]) / (2.0 * Math.PI + speakerAngle[0] - speakerAngle[1]);
+                panningLUT[offset + FRONT_RIGHT] = Math.cos(alpha);
+                panningLUT[offset + FRONT_LEFT] = Math.sin(alpha);
+            }
+        }
+    };
+
     // Calculates the low-pass filter coefficient given the pre-scaled gain and
     // cos(w) value. Note that g should be pre-scaled (sqr(gain) for one-pole,
     // sqrt(gain) for four-pole, etc)
@@ -1446,23 +1512,18 @@
                 this.params.dryGains[n][m] = 0.0;
             }
         }
-        // TODO: optimize all this away? What should the values be?
-        var speaker2chan;
-        var speakerGain;
-        switch (deviceChannels) {
-            case 1:
-                speaker2chan = [FRONT_CENTER];
-                speakerGain = [0.0, 0.0, 1.0];
-                break;
-            case 2:
-                speaker2chan = [FRONT_LEFT, FRONT_RIGHT];
-                speakerGain = [1.0, 1.0];
-                break;
-        }
-        for (var n = 0; n < deviceChannels; n++) {
-            var chan = speaker2chan[n];
-            var combinedGain = ambientGain + (speakerGain[chan] - ambientGain) * directionalGain;
-            this.params.dryGains[0][chan] = dryGain * combinedGain;
+        var pos = aluCart2LUTpos(-position[2], position[0]);
+        if (deviceChannels == 1) {
+            var centerGain = panningLUT[MAXCHANNELS * pos + FRONT_CENTER];
+            var combinedGain = ambientGain + (centerGain - ambientGain) * directionalGain;
+            this.params.dryGains[0][FRONT_CENTER] = dryGain * combinedGain;
+        } else {
+            var leftGain = panningLUT[MAXCHANNELS * pos + FRONT_LEFT];
+            var rightGain = panningLUT[MAXCHANNELS * pos + FRONT_RIGHT];
+            var leftCombinedGain = ambientGain + (leftGain - ambientGain) * directionalGain;
+            this.params.dryGains[0][FRONT_LEFT] = dryGain * leftCombinedGain;
+            var rightCombinedGain = ambientGain + (rightGain - ambientGain) * directionalGain;
+            this.params.dryGains[0][FRONT_RIGHT] = dryGain * rightCombinedGain;
         }
 
         // Update filter coefficients. Calculations based on the I3DL2 spec.
@@ -1720,6 +1781,26 @@
         }
 
         this.scratchBuffer = new WebALFloatArray(STACK_DATA_SIZE / 4);
+
+        this.channelMatrix = new Array(MAXCHANNELS);
+        for (var n = 0; n < MAXCHANNELS; n++) {
+            this.channelMatrix[n] = new WebALFloatArray(MAXCHANNELS);
+        }
+
+        var deviceChannels = device.channels;
+        switch (deviceChannels) {
+            case 1:
+                this.channelMatrix[FRONT_CENTER][FRONT_CENTER] = 1.0;
+                this.channelMatrix[FRONT_LEFT][FRONT_CENTER] = Math.sqrt(0.5);
+                this.channelMatrix[FRONT_RIGHT][FRONT_CENTER] = Math.sqrt(0.5);
+                break;
+            case 2:
+                this.channelMatrix[FRONT_LEFT][FRONT_LEFT] = 1.0;
+                this.channelMatrix[FRONT_RIGHT][FRONT_RIGHT] = 1.0;
+                this.channelMatrix[FRONT_CENTER][FRONT_LEFT] = Math.sqrt(0.5);
+                this.channelMatrix[FRONT_CENTER][FRONT_RIGHT] = Math.sqrt(0.5);
+                break;
+        }
     };
 
     WebALSoftwareMixer.prototype.write = function (target, sampleCount) {
@@ -1745,14 +1826,29 @@
         // Write to target
         var dryBuffer = this.dryBuffer;
         var targetOffset = 0;
-        for (var n = 0; n < sampleCount; n++) {
-            for (var m = 0; m < this.channels; m++) {
+        if (this.channels == 1) {
+            // Mono
+            for (var n = 0; n < sampleCount; n++) {
                 var samp = 0.0;
                 for (var c = 0; c < MAXCHANNELS; c++) {
-                    samp += dryBuffer[c][n]; // * device->ChannelMatrix[c][m];
+                    samp += dryBuffer[c][n] * this.channelMatrix[c][FRONT_CENTER];
                 }
-                target[targetOffset] = samp;
-                targetOffset++;
+                target[targetOffset++] = samp;
+            }
+        } else if (this.channels == 2) {
+            // Stereo
+            for (var n = 0; n < sampleCount; n++) {
+                var samp;
+                samp = 0.0;
+                for (var c = 0; c < MAXCHANNELS; c++) {
+                    samp += dryBuffer[c][n] * this.channelMatrix[c][FRONT_LEFT];
+                }
+                target[targetOffset++] = samp;
+                samp = 0.0;
+                for (var c = 0; c < MAXCHANNELS; c++) {
+                    samp += dryBuffer[c][n] * this.channelMatrix[c][FRONT_RIGHT];
+                }
+                target[targetOffset++] = samp;
             }
         }
     };
@@ -2418,7 +2514,7 @@
         buffer._invalidateSources();
     };
 
-    // TODO: an implementation using the mozWriteAudio API
+    // An implementation using the mozWriteAudio API
     var WebALNativeDevice = function (context) {
         var self = this;
         WebALDevice.apply(this, [context, "Native"]);
