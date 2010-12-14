@@ -28,8 +28,8 @@ Why?
 I've been playing with building games in the browser for the past few months and although the rapidly-improving <canvas> implementations and
 WebGL are making it really easy to display pretty things, the sound support inside the browser sucks. Only recently have people started working
 on solutions to getting audio out from pages that don't involve plugins, but they are all focused around non-gaming scenarios (where timing,
-scalability, and other factors don't matter). For the more advanced APIs coming out (such as Web Audio) they use large, cumbersome graphs that
-may work well for setting up static audio scenes but don't fit in to immediate-mode games.
+scalability, and other factors don't matter). For the more advanced APIs coming out (such as [Web Audio](http://chromium.googlecode.com/svn/trunk/samples/audio/specification/specification.html))
+they use large, cumbersome graphs that may work well for setting up static audio scenes but don't fit in to immediate-mode games.
 
 Having had some experience with OpenAL on the iPhone, I decided to bring the API over to the browser. I primarily want it for sound effects although
 it could be used for music as well. Because there is a non-trivial bit of overhead doing the processing in Javascript it's best used for short,
@@ -40,10 +40,8 @@ would be to actually get the spec published like WebGL ^_^
 
 Known Issues/TODO
 ====================
-* All 2D/3D options are untested (need samples)
+* Need an Audio replacement for sources for browsers that don't support it
 * Massive performance pass required (lots of extra loops/copies/etc)
-* `<audio>` tag read support only works in Firefox
-* Implement a device that targets [Web Audio](http://chromium.googlecode.com/svn/trunk/samples/audio/specification/specification.html)
 * Reduce playback latency if possible (using the 'auto latency detection' sample from MDC)
 * Need a query on buffers to see if they have been loaded
 
