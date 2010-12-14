@@ -157,6 +157,43 @@ is as simple as just calling `al.sourcePlay()` on your sources as you want them 
 
 Check out the sample for a demonstration of this as well as some examples of querying source states/etc.
 
+Positioning Sounds (sample05)
+--------------------
+There are several ways to affect how sounds are heard in WebAL. The two main areas that play a role are the listener and the source.
+
+The listener is defined as having a position in 3D space that represents the destination for all sounds. You can set the gain (volume),
+position, orientation, and velocity like such:
+    // GAIN is a [0-1] range where 0 is muted and 1 is max
+    al.listenerParameter(al.GAIN, 0.5);
+    // POSITION is an XYZ position in scene space
+    al.listenerParameter(al.POSITION, [10, 0, 3]);
+    // VELOCITY is a vector representing the speed and direction of the listener (or zeros to ignore)
+    al.listenerParameter(al.VELOCITY, [4, 0, 0]);
+    // ORIENTATION is a packed array with XYZ of the forward vector followed by the XYZ of the up vector
+    al.listenerParameter(al.ORIENTATION, [
+        0, 0, -1, // Forward
+        0, 1, 0   // Up
+    ]);
+
+Sound sources also have a variety of parameters that allow you to affect how the listener hears them:
+    // GAIN is a [0-1] range where 0 is muted and 1 is max
+    al.sourceParameter(source, al.GAIN, 0.5);
+    // PITCH is a pitch multiplier
+    al.sourceParameter(source, al.PITCH, 1.0);
+    // SOURCE_RELATIVE indicates that the POSITION of this source is relative to the position of the listener (instead of in scene space)
+    al.sourceParameter(source, al.SOURCE_RELATIVE, false);
+    // POSITION, VELOCITY, and DIRECTION - leave VELOCITY/DIRECTION as all zeros if you won't use them
+    al.sourceParameter(source, al.POSITION, [0, 5, 0]);
+    al.sourceParameter(source, al.VELOCITY, [0, 1, 0]);
+    al.sourceParameter(source, al.DIRECTION, [0, 0, 0]);
+    // There are many more, including min/max gain, distance model and arguments, etc
+
+If you are using WebAL to play sounds without using positioning, you will likely only use GAIN to change the per-sound volume. In a
+2D game you'd likely use POSITION on the listener or the source to modify the x and pan the sound between speakers. In a full 3D game
+you can use the additional parameters to get true 3D sound.
+
+*NOTE*: only mono sound sources will have positional affects. Stereo sources are only affected by GAIN.
+
 Samples Coming Soon
 --------------------
 * Per-sound audio control (volume, etc)
