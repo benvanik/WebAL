@@ -17,6 +17,7 @@ Features
 * Streaming sources for low-level dynamic audio generation
 * Support for `<audio>` sources (FF only)
 * Flash fallback for browsers without direct audio writing
+* HTML5 Audio fallback for browsers without Flash
 
 Credits
 ---------------------
@@ -40,18 +41,24 @@ would be to actually get the spec published like WebGL ^_^
 
 Known Issues/TODO
 ====================
-* Need an Audio replacement for sources for browsers that don't support it
 * Massive performance pass required (lots of extra loops/copies/etc)
 * Reduce playback latency if possible (using the 'auto latency detection' sample from MDC)
 * Need a query on buffers to see if they have been loaded
 * Implement seeking/querying position on sources
 * You must provide both ogg and mp3 sources for your content (may be possible to do ogg decoding in Flash, but that seems hard)
+* The HTML5 Audio output device has some bugs, but mainly because of broken browsers
 
 Browser Support
 ====================
 Currently only Firefox 4 provides an API that allows for this project to work 100% natively in the browser. Other browsers are playing with much
 more complex (and nasty) higher-level APIs that it may be possible to emulate this on top of, but I haven't looked into it yet. When not running
 in Firefox 4, a small Flash app will be used to do the sound writing only, with all the rest remaining in pure Javascript.
+
+When Flash is not supported (such as on iOS) HTML5 Audio will be used. This uses the browser to do the playback but has some limitations - for
+example, you can position sounds in 3D but the output will be as if they were mixed in mono (volume only adjustment, no panning). The browsers
+all have issues with some of the more stressful scenarios, such as rapidly playing back the same sound or seeking quickly. Finally, there is
+a per-source Audio element created which if the browsers aren't reusing resources (I doubt they are) can quickly blow up memory and bring the
+browser down.
 
 Design
 ====================
@@ -85,6 +92,31 @@ after creation to query the values actually used by the underlying implementatio
     };
     var al = WebAL.getContext(attrs);
 Note that only the first call to `getContext` will use the attributes - after that they are ignored.
+
+To get the best performance you can set several flags indicating whether or not you want support for certain features.
+    var attrs = {
+        // If you will only be providing URLs and not dynamically filling buffers, disable dynamic audio
+        supportDynamicAudio: false,
+        // If you will not be using any of the 3D audio features or panning, disable stereo mixing
+        supportStereoMixing: false
+    };
+    var al = WebAL.getContext(attrs);
+
+For testing purposes you can override the device used for playback in two ways - appending a URL parameter or setting a context attribute.
+Supported devices include:
+* null: no output or processing (don't query state, it may be wrong)
+* test: full mixing but no output
+* browser: HTML5 Audio - doesn't support dynamic audio or stereo mixing
+* flash: Flash software output
+* native: browser-native audio output (currently only supported on Firefox 4+)
+    // Runtime override
+    http://localhost/sample.html?webal_device=DEVICE
+
+    // Coded override
+    var attrs = {
+        device: "DEVICE"
+    };
+    var al = WebAL.getContext(attrs);
 
 sample01 - Playing a Sound
 --------------------

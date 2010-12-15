@@ -7,8 +7,7 @@
         this.channels = (source && source.channels) ? source.channels : 2;
         this.device = (source && source.device) ? source.device : null;
         this.supportDynamicAudio = (source && source.supportDynamicAudio !== undefined) ? source.supportDynamicAudio : true;
-        this.supportStreaming = (source && source.supportStreaming !== undefined) ? source.supportStreaming : true;
-        this.support3D = (source && source.support3D !== undefined) ? source.support3D : true;
+        this.supportStereoMixing = (source && source.supportStereoMixing !== undefined) ? source.supportStereoMixing : true;
 
         // Validate
         this.frequency = Math.max(this.frequency, 1);
@@ -58,7 +57,7 @@
                 break;
         }
         if (!devices) {
-            if (this.attributes.supportDynamicAudio || this.attributes.supportStreaming || this.attributes.support3D) {
+            if (this.attributes.supportDynamicAudio || this.attributes.supportStereoMixing) {
                 // Requested full cap mode
                 devices = [WebALNativeDevice, WebALFlashDevice, WebALBrowserDevice, WebALNullDevice];
             } else {

@@ -7,8 +7,7 @@
         WebALDevice.apply(this, [context, "Native"]);
 
         this.context.attributes.supportDynamicAudio = true;
-        this.context.attributes.supportStreaming = true;
-        this.context.attributes.support3D = true;
+        this.context.attributes.supportStereoMixing = true;
 
         this.audioEl = new Audio();
         this.audioEl.mozSetup(this.channels, this.frequency);

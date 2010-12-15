@@ -33,8 +33,7 @@
         WebALDevice.apply(this, [context, "Browser"]);
 
         this.context.attributes.supportDynamicAudio = false;
-        this.context.attributes.supportStreaming = false;
-        this.context.attributes.support3D = false;
+        this.context.attributes.supportStereoMixing = false;
 
         this.mixer = new WebALBrowserMixer(context);
 

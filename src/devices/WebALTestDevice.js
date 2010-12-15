@@ -7,8 +7,7 @@
         WebALDevice.apply(this, [context, "Test"]);
 
         this.context.attributes.supportDynamicAudio = true;
-        this.context.attributes.supportStreaming = true;
-        this.context.attributes.support3D = true;
+        this.context.attributes.supportStereoMixing = true;
 
         var sampleCapacity = this.updateSize;
         this.buffer = new WebALFloatArray(sampleCapacity * this.channels);

@@ -7,8 +7,7 @@
         WebALDevice.apply(this, [context, "Flash"]);
 
         this.context.attributes.supportDynamicAudio = true;
-        this.context.attributes.supportStreaming = true;
-        this.context.attributes.support3D = true;
+        this.context.attributes.supportStereoMixing = true;
 
         // Flash only supports 2 channel 44100hz, but we can handle the channel thing
         this.frequency = 44100;
