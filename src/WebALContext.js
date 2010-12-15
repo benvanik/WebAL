@@ -877,6 +877,7 @@
 
             // Increment reference count
             buffer.referencingSources.push(source);
+            this.device.bindSourceBuffer(source, buffer);
         } else {
             source.type = this.UNDETERMINED;
         }
@@ -927,6 +928,7 @@
         for (var n = 0; n < buffers.length; n++) {
             var buffer = buffers[n];
             buffer.referencingSources.push(source);
+            this.device.bindSourceBuffer(source, buffer);
             source.queue.push(buffer);
         }
 
@@ -939,7 +941,7 @@
     };
     WebALContext.prototype.sourceQueueBuffer = function (source, buffer) {
         this.sourceQueueBuffers(source, [buffer]);
-    }
+    };
 
     WebALContext.prototype.sourceUnqueueBuffers = function (source, count) {
         if (!source || (count == 0)) {
@@ -965,6 +967,7 @@
         for (var n = 0; n < count; n++) {
             var buffer = source.queue.shift();
             buffer.referencingSources.splice(buffer.referencingSources.indexOf(source), 1);
+            this.device.unbindSourceBuffer(source, buffer);
             buffers.push(buffer);
             source.buffersQueued--;
         }

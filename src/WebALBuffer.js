@@ -1,8 +1,12 @@
 (function () {
     var exports = window;
 
+    var uniqueBufferId = 0;
+
     var WebALBuffer = function (context) {
         WebALObject.apply(this, [context]);
+
+        this.id = uniqueBufferId++;
 
         this.data = null;
 

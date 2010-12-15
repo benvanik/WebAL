@@ -70,6 +70,7 @@
         for (var n = 0; n < this.queue.length; n++) {
             var buffer = this.queue[n];
             buffer.referencingSources.splice(buffer.referencingSources.indexOf(this), 1);
+            this.context.device.unbindSourceBuffer(this, buffer);
         }
         this.queue.length = 0;
     };

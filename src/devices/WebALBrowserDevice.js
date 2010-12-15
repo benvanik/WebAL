@@ -6,6 +6,25 @@
     };
 
 
+    var WebALBrowserAudio = function (audioRef) {
+        this.audioRef = audioRef;
+    };
+    WebALBrowserAudio.prototype.createAudioElement = function () {
+        var audio = new Audio();
+        for (var n = 0; n < this.audioRef.length; n++) {
+            var ref = this.audioRef[n];
+            var source = document.createElement("source");
+            source.type = ref.type;
+            source.src = ref.src;
+            audio.appendChild(source);
+        }
+
+        // Any settings?
+        audio.load();
+
+        return audio;
+    };
+
 
 
     // Browser mixing using HTML5 audio
@@ -45,6 +64,7 @@
     WebALBrowserDevice.prototype.sourceUpdateRequested = function (source) {
         var al = this.context;
 
+        source.needsUpdate = true;
         source._update();
 
         // Get the current buffer
@@ -54,7 +74,7 @@
         } else {
             buffer = source.queue[0];
         }
-        var audio = source.buffer.audioElement;
+        var audio = source.audioElements[buffer.id];
 
         audio.looping = source.looping;
 
@@ -63,7 +83,7 @@
         // TODO: pitch
 
         // Calculate final gain
-        var finalGain;
+        var finalGain = 0;
         switch (buffer.channels) {
             case 1:
                 finalGain = source.params.dryGains[0][2];
@@ -72,12 +92,20 @@
                 finalGain = (source.params.dryGains[0][0] + source.params.dryGains[1][1]) / 2.0;
                 break;
         }
-        //audio.volume = finalGain
+        audio.volume = finalGain;
     };
 
     WebALBrowserDevice.prototype.sourceStateChange = function (source, oldState, newState) {
         var al = this.context;
-        var audio = source.buffer.audioElement;
+
+        // Get the current buffer
+        var buffer;
+        if (source.buffersProcessed < source.buffersQueued) {
+            buffer = source.queue[source.buffersProcessed];
+        } else {
+            buffer = source.queue[0];
+        }
+        var audio = source.audioElements[buffer.id];
 
         switch (oldState) {
             case al.INITIAL:
@@ -151,9 +179,44 @@
         }
     };
 
+    WebALBrowserDevice.prototype.bindSourceBuffer = function (source, buffer) {
+        if (!source.audioElements) {
+            source.audioElements = {};
+        }
+
+        // Create a new audio element
+        var audio = buffer.audio.createAudioElement();
+
+        // Bind events for state changes
+        function audioEnded(e) {
+            console.log("audio ended");
+            // TODO: call to source
+        };
+        audio.addEventListener("ended", audioEnded, false);
+
+        source.audioElements[buffer.id] = audio;
+    };
+
+    WebALBrowserDevice.prototype.unbindSourceBuffer = function (source, buffer) {
+        if (!source.audioElements) {
+            return;
+        }
+
+        var audio = source.audioElements[buffer.id];
+        source.audioElements[buffer.id] = null;
+
+        // TODO: remove events
+        audio.onended = null;
+
+        // Unload?
+        // TODO: kill somehow
+        audio.pause();
+    };
+
     WebALBrowserDevice.prototype.setupAudioBuffer = function (buffer, audioElement, streaming) {
         var al = this.context;
 
+        var audioRef = null;
         var audio = null;
         if (audioElement instanceof Array) {
             // Audio reference list
@@ -165,9 +228,37 @@
                 source.src = ref.src;
                 audio.appendChild(source);
             }
+
+            // Clone so that no one can change it
+            audioRef = [];
+            for (var n = 0; n < audioElement.length; n++) {
+                var ref = audioElement[n];
+                audioRef.push({
+                    type: ref.type,
+                    src: ref.src
+                });
+            }
         } else if (audioElement instanceof Audio) {
             // Browser <audio> element
             audio = audioElement;
+
+            // Extract sources
+            var sources = audioElement.getElementsByTagName("source");
+            if (sources && sources.length) {
+                for (var n = 0; n < sources.length; n++) {
+                    var source = sources[n];
+                    audioRef.push({
+                        type: source.type,
+                        src: source.src
+                    });
+                }
+            } else {
+                // Would be nice to know the type...
+                audioRef.push({
+                    type: source.type,
+                    src: source.src
+                });
+            }
         }
 
         function audioLoadedMetadata(e) {
@@ -189,15 +280,9 @@
 
         audio.addEventListener("loadedmetadata", audioLoadedMetadata, false);
 
-        // HACK:
-        function audioEnded(e) {
-            console.log("audio ended");
-        };
-        audio.addEventListener("ended", audioEnded, false);
-
         audio.load();
 
-        buffer.audioElement = audio;
+        buffer.audio = new WebALBrowserAudio(audioRef);
     };
 
     WebALBrowserDevice.prototype.abortAudioBuffer = function (buffer) {

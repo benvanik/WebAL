@@ -54,6 +54,14 @@
         // Ignored
     };
 
+    WebALDevice.prototype.bindSourceBuffer = function (source, buffer) {
+        // Ignored
+    };
+
+    WebALDevice.prototype.unbindSourceBuffer = function (source, buffer) {
+        // Ignored
+    };
+
     exports.WebALDevice = WebALDevice;
 
 })();
