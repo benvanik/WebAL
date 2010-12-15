@@ -2,10 +2,15 @@
 <html>
 <head>
     <title>WebAL Sample 02</title>
-    <script type="text/javascript" src="../../src/webal.js"></script>
+    <script type="text/javascript" src="../../lib/WebAL-debug.js"></script>
     <script type="text/javascript">
         function DocumentLoaded() {
             var al = WebAL.getContext();
+            //var al = WebAL.getContext({
+            //    supportDynamicAudio: false,
+            //    supportStreaming: false,
+            //    support3D: false
+            //});
 
             // Audio properties
             var channelCount = 1;

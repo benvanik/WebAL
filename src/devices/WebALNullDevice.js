@@ -6,22 +6,9 @@
         var self = this;
         WebALDevice.apply(this, [context, "Null"]);
 
-        this.context.attributes.supportDynamicAudio = true;
-        this.context.attributes.supportStreaming = true;
-        this.context.attributes.support3D = true;
-
-        var sampleCapacity = this.updateSize;
-        this.buffer = new WebALFloatArray(sampleCapacity * this.channels);
-
-        this.mixer = new WebALSoftwareMixer(context, this);
-
-        window.setInterval(function () {
-            self.handleUpdates();
-
-            self.mixer.fillBuffer(self.buffer, sampleCapacity);
-
-            // ?
-        }, this.refreshInterval);
+        this.context.attributes.supportDynamicAudio = false;
+        this.context.attributes.supportStreaming = false;
+        this.context.attributes.support3D = false;
     };
     WebALNullDevice.prototype = new WebALDevice();
     WebALNullDevice.prototype.constructor = WebALNullDevice;

@@ -40,6 +40,21 @@
         if (WebAL.sharedContext) {
             return WebAL.sharedContext;
         } else {
+            var attributes = {};
+
+            // Check the URL for an override on the device
+            var query = window.location.search;
+            if (query.length > 0) {
+                query = query.substr(1);
+                var terms = query.split("&");
+                for (var n = 0; n < terms.length; n++) {
+                    var parts = terms[n].split("=");
+                    if (parts[0] === "webal_device") {
+                        attributes.device = parts[1];
+                    }
+                }
+            }
+
             var attr = new WebALContextAttributes(attributes);
             var context = new WebALContext(attr);
 

@@ -2,6 +2,7 @@
 <html>
 <head>
     <title>WebAL Sample 04</title>
+    <!--<script type="text/javascript" src="../../lib/WebAL-debug.js"></script>-->
     <script type="text/javascript" src="../../src/WebALCore.js"></script>
     <script type="text/javascript" src="../../src/WebALContext.js"></script>
     <script type="text/javascript" src="../../src/WebALListener.js"></script>
@@ -10,12 +11,18 @@
     <script type="text/javascript" src="../../src/WebALSoftwareMixer.js"></script>
     <script type="text/javascript" src="../../src/WebALDevice.js"></script>
     <script type="text/javascript" src="../../src/devices/WebALNullDevice.js"></script>
+    <script type="text/javascript" src="../../src/devices/WebALTestDevice.js"></script>
     <script type="text/javascript" src="../../src/devices/WebALFlashDevice.js"></script>
     <script type="text/javascript" src="../../src/devices/WebALNativeDevice.js"></script>
     <script type="text/javascript" src="../../src/devices/WebALBrowserDevice.js"></script>
     <script type="text/javascript">
         function DocumentLoaded() {
             var al = WebAL.getContext();
+            //var al = WebAL.getContext({
+            //    supportDynamicAudio: false,
+            //    supportStreaming: false,
+            //    support3D: false
+            //});
 
             var contentPath = "../content/";
             var soundFiles = [

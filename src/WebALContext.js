@@ -5,9 +5,10 @@
         this.frequency = (source && source.frequency) ? source.frequency : 44100;
         this.refreshInterval = (source && source.refreshInterval) ? source.refreshInterval : 16;
         this.channels = (source && source.channels) ? source.channels : 2;
-        this.supportDynamicAudio = source ? source.supportDynamicAudio : true;
-        this.supportStreaming = source ? source.supportStreaming : true;
-        this.support3D = source ? source.support3D : true;
+        this.device = (source && source.device) ? source.device : null;
+        this.supportDynamicAudio = (source && source.supportDynamicAudio !== undefined) ? source.supportDynamicAudio : true;
+        this.supportStreaming = (source && source.supportStreaming !== undefined) ? source.supportStreaming : true;
+        this.support3D = (source && source.support3D !== undefined) ? source.support3D : true;
 
         // Validate
         this.frequency = Math.max(this.frequency, 1);
@@ -37,14 +38,33 @@
 
         this._extensionList = [];
 
-        // Pick a device based on detected support
-        var devices;
-        if (this.attributes.supportDynamicAudio || this.attributes.supportStreaming || this.attributes.support3D) {
-            // Requested full cap mode
-            devices = [WebALNativeDevice, WebALFlashDevice, WebALBrowserDevice, WebALNullDevice];
-        } else {
-            // Requested limited cap mode - try to use browser mixer over others
-            devices = [WebALBrowserDevice, WebALNativeDevice, WebALFlashDevice, WebALNullDevice];
+        // Pick a device based on detected support - unless overridden
+        var devices = null;
+        switch (this.attributes.device) {
+            case "native":
+                devices = [WebALNativeDevice, WebALNullDevice];
+                break;
+            case "flash":
+                devices = [WebALFlashDevice, WebALNullDevice];
+                break;
+            case "browser":
+                devices = [WebALBrowserDevice, WebALNullDevice];
+                break;
+            case "test":
+                devices = [WebALTestDevice];
+                break;
+            case "null":
+                devices = [WebALNullDevice];
+                break;
+        }
+        if (!devices) {
+            if (this.attributes.supportDynamicAudio || this.attributes.supportStreaming || this.attributes.support3D) {
+                // Requested full cap mode
+                devices = [WebALNativeDevice, WebALFlashDevice, WebALBrowserDevice, WebALNullDevice];
+            } else {
+                // Requested limited cap mode - try to use browser mixer over others
+                devices = [WebALBrowserDevice, WebALNativeDevice, WebALFlashDevice, WebALNullDevice];
+            }
         }
         for (var n = 0; n < devices.length; n++) {
             if (devices[n].detect() == true) {
