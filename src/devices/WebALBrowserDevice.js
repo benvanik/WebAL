@@ -90,12 +90,14 @@
 
         // Calculate final gain
         var finalGain = 0;
-        switch (buffer.channels) {
+        switch (this.channels) {
             case 1:
                 finalGain = source.params.dryGains[0][2];
                 break;
             case 2:
-                finalGain = (source.params.dryGains[0][0] + source.params.dryGains[1][1]) / 2.0;
+                var leftGain = source.params.dryGains[0][0];
+                var rightGain = source.params.dryGains[0][1];
+                finalGain = (Math.abs(leftGain) + Math.abs(rightGain)) / 2.0;
                 break;
         }
         audio.volume = finalGain;
@@ -116,6 +118,13 @@
         }
         var audio = source.audioElements[buffer.id];
 
+        function setTime(time) {
+            try {
+                audio.currentTime = 0;
+            } catch (e) {
+            }
+        };
+
         switch (oldState) {
             case al.INITIAL:
                 switch (newState) {
@@ -124,7 +133,7 @@
                         break;
                     case al.PLAYING:
                         audio.play();
-                        audio.currentTime = 0;
+                        setTime(0);
                         break;
                     case al.PAUSED:
                         // Nothing
@@ -137,18 +146,18 @@
             case al.PLAYING:
                 switch (newState) {
                     case al.INITIAL:
-                        audio.currentTime = 0;
+                        setTime(0);
                         audio.pause();
                         break;
                     case al.PLAYING:
                         // Restart from beginning
-                        audio.currentTime = 0;
+                        setTime(0);
                         break;
                     case al.PAUSED:
                         audio.pause();
                         break;
                     case al.STOPPED:
-                        audio.currentTime = 0;
+                        setTime(0);
                         audio.pause();
                         break;
                 }
@@ -156,7 +165,7 @@
             case al.PAUSED:
                 switch (newState) {
                     case al.INITIAL:
-                        audio.currentTime = 0;
+                        setTime(0);
                         break;
                     case al.PLAYING:
                         audio.play();
@@ -165,14 +174,14 @@
                         // No-op
                         break;
                     case al.STOPPED:
-                        audio.currentTime = 0;
+                        setTime(0);
                         break;
                 }
                 break;
             case al.STOPPED:
                 switch (newState) {
                     case al.INITIAL:
-                        audio.currentTime = 0;
+                        setTime(0);
                         break;
                     case al.PLAYING:
                         audio.play();
@@ -282,7 +291,7 @@
 
         function audioLoadedMetadata(e) {
             buffer.frequency = 44100;
-            buffer.originalChannels = buffer.channels = 2;
+            buffer.originalChannels = buffer.channels = 1;
             buffer.originalType = buffer.type = al.FLOAT;
             buffer.bits = 32;
 
