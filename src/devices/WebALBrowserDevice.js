@@ -38,6 +38,9 @@
 
         this.mixer = new WebALBrowserMixer(context);
 
+        // Some browsers don't support 'loop' yet, so fake it
+        this.manualLoop = (new Audio()).loop === undefined;
+
         //window.setInterval(function () {
         //self.handleUpdates();
         // ??
@@ -74,9 +77,12 @@
         } else {
             buffer = source.queue[0];
         }
+        if (!buffer) {
+            return;
+        }
         var audio = source.audioElements[buffer.id];
 
-        audio.looping = source.looping;
+        audio.loop = source.looping;
 
         // TODO: position
 
@@ -105,6 +111,9 @@
         } else {
             buffer = source.queue[0];
         }
+        if (!buffer) {
+            return;
+        }
         var audio = source.audioElements[buffer.id];
 
         switch (oldState) {
@@ -114,8 +123,8 @@
                         // No-op
                         break;
                     case al.PLAYING:
-                        audio.currentTime = 0;
                         audio.play();
+                        audio.currentTime = 0;
                         break;
                     case al.PAUSED:
                         // Nothing
@@ -128,20 +137,19 @@
             case al.PLAYING:
                 switch (newState) {
                     case al.INITIAL:
-                        audio.pause();
                         audio.currentTime = 0;
+                        audio.pause();
                         break;
                     case al.PLAYING:
                         // Restart from beginning
                         audio.currentTime = 0;
-                        audio.play();
                         break;
                     case al.PAUSED:
                         audio.pause();
                         break;
                     case al.STOPPED:
-                        audio.pause();
                         audio.currentTime = 0;
+                        audio.pause();
                         break;
                 }
                 break;
@@ -180,6 +188,8 @@
     };
 
     WebALBrowserDevice.prototype.bindSourceBuffer = function (source, buffer) {
+        var self = this;
+        var al = this.context;
         if (!source.audioElements) {
             source.audioElements = {};
         }
@@ -189,8 +199,16 @@
 
         // Bind events for state changes
         function audioEnded(e) {
-            console.log("audio ended");
-            // TODO: call to source
+            if (source.looping) {
+                if (self.manualLoop) {
+                    audio.currentTime = 0;
+                    audio.play();
+                } else {
+                    // Browser should auto-loop for us
+                }
+            } else {
+                source.state = al.STOPPED;
+            }
         };
         audio.addEventListener("ended", audioEnded, false);
 
@@ -198,6 +216,7 @@
     };
 
     WebALBrowserDevice.prototype.unbindSourceBuffer = function (source, buffer) {
+        var al = this.context;
         if (!source.audioElements) {
             return;
         }

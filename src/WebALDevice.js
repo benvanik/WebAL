@@ -20,7 +20,7 @@
         // TODO: optimize away
         for (var n = 0; n < al.activeSources.length; n++) {
             var source = al.activeSources[n];
-            if (source.state != this.PLAYING) {
+            if (source.state != al.PLAYING) {
                 // No longer active
                 al.activeSources.splice(n, 1);
                 n--;

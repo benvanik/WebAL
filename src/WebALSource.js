@@ -20,8 +20,6 @@
 
         WebALSource.initPanningLUT(context.device.channels);
 
-        this.needsUpdate = true;
-
         this.pitch = 1.0;
         this.gain = 1.0;
         this.minGain = 0.0;
@@ -62,6 +60,9 @@
                 history: [0, 0, 0, 0, 0, 0, 0, 0, 0]
             }
         };
+
+        this.needsUpdate = false;
+        this.context.device.sourceUpdateRequested(this);
     };
     WebALSource.prototype = new WebALObject();
     WebALSource.prototype.constructor = WebALSource;
