@@ -1,0 +1,59 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <title>WebAL Sample 02</title>
+    <script type="text/javascript" src="../../lib/WebAL-debug.js"></script>
+    <script type="text/javascript">
+        function DocumentLoaded() {
+            var al = WebAL.getContext();
+            //var al = WebAL.getContext({
+            //    supportDynamicAudio: false,
+            //    supportStereoMixing: false
+            //});
+
+            // Audio properties
+            var channelCount = 1;
+            var frequency = 44100;
+            var bufferSize = frequency / 10 * channelCount;
+            var format = (channelCount == 1) ? al.FORMAT_MONO_FLOAT32 : al.FORMAT_STEREO_FLOAT32;
+
+            // Generate a chunk of audio
+            function generateChunk(position) {
+                var data = new WebALFloatArray(bufferSize);
+                var k = 2 * Math.PI * 440 / frequency;
+                if (channelCount == 1) {
+                    // Mono
+                    for (var n = 0; n < bufferSize; n++) {
+                        data[n] = Math.sin(k * (n + position));
+                    }
+                } else {
+                    // Stereo
+                    var d = 0;
+                    for (var n = 0; n < bufferSize / 2; n++) {
+                        var value = Math.sin(k * (n + position));
+                        // TODO: check to see if the mixer should be doing this automatically
+                        data[d++] = value / 2.0;
+                        data[d++] = value / 2.0;
+                    }
+                }
+                return data;
+            };
+
+            // Setup static buffer data
+            var buffer = al.createBuffer();
+            var data = generateChunk(0);
+            al.bufferData(buffer, format, data, frequency);
+
+            // Create the source
+            var source = al.createSource();
+            al.sourceBuffer(source, buffer);
+            al.sourceParameter(source, al.LOOPING, true);
+
+            // Start playback (looping)
+            al.sourcePlay(source);
+        };
+    </script>
+</head>
+<body onload="DocumentLoaded();">
+</body>
+</html>

@@ -1,0 +1,94 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <title>WebAL Sample 04</title>
+    <script type="text/javascript" src="../../lib/WebAL-debug.js"></script>
+    <!--<script type="text/javascript" src="../../src/WebALCore.js"></script>
+    <script type="text/javascript" src="../../src/WebALContext.js"></script>
+    <script type="text/javascript" src="../../src/WebALListener.js"></script>
+    <script type="text/javascript" src="../../src/WebALBuffer.js"></script>
+    <script type="text/javascript" src="../../src/WebALSource.js"></script>
+    <script type="text/javascript" src="../../src/WebALSoftwareMixer.js"></script>
+    <script type="text/javascript" src="../../src/WebALDevice.js"></script>
+    <script type="text/javascript" src="../../src/devices/WebALNullDevice.js"></script>
+    <script type="text/javascript" src="../../src/devices/WebALTestDevice.js"></script>
+    <script type="text/javascript" src="../../src/devices/WebALFlashDevice.js"></script>
+    <script type="text/javascript" src="../../src/devices/WebALNativeDevice.js"></script>
+    <script type="text/javascript" src="../../src/devices/WebALBrowserDevice.js"></script>-->
+    <script type="text/javascript">
+        function DocumentLoaded() {
+            var al = WebAL.getContext();
+            //var al = WebAL.getContext({
+            //    supportDynamicAudio: false,
+            //    supportStereoMixing: false
+            //});
+
+            var contentPath = "../content/";
+            var soundFiles = [
+                "1up",
+                "bonus",
+                "coin",
+                "gameover",
+                "invincible",
+                "jump",
+                "timewarning"
+            ];
+
+            var sources = [];
+            for (var n = 0; n < soundFiles.length; n++) {
+                var soundSrc = contentPath + soundFiles[n];
+
+                // Use the browser to load the audio
+                var audioRef = [
+                    { type: "audio/mpeg", src: soundSrc + ".mp3" },
+                    { type: "audio/ogg", src: soundSrc + ".ogg" }
+                ];
+
+                // Setup buffer with the audio element
+                var buffer = al.createBuffer();
+                al.bufferData(buffer, audioRef, false);
+
+                // Bind buffer to source
+                var source = al.createSource();
+                al.sourceBuffer(source, buffer);
+
+                sources.push(source);
+            }
+
+            document.addEventListener("keydown", function (e) {
+                var code = e.keyCode || e.charCode;
+                if ((code >= 48) && (code <= 57)) {
+                    var index = code - 48;
+                    if (index >= sources.length) {
+                        return;
+                    }
+
+                    var source = sources[index];
+
+                    var isPlaying = (al.getSourceParameter(source, al.SOURCE_STATE) == al.PLAYING);
+                    var isLooping = (al.getSourceParameter(source, al.LOOPING) == true);
+                    if (isPlaying && isLooping) {
+                        // Stop looping sounds
+                        al.sourceStop(source);
+                    } else {
+                        // Loop if ctrl is down
+                        if (e.ctrlKey) {
+                            al.sourceParameter(source, al.LOOPING, true);
+                        } else {
+                            al.sourceParameter(source, al.LOOPING, false);
+                        }
+
+                        // Rewind and play again
+                        al.sourcePlay(source);
+                    }
+
+                    e.preventDefault();
+                }
+            }, false);
+        };
+    </script>
+</head>
+<body onload="DocumentLoaded();">
+    Use the number keys to play sounds. Hold ctrl to play with looping.
+</body>
+</html>
