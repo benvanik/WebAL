@@ -112,7 +112,7 @@ For testing purposes you can override the device used for playback in two ways -
     };
     var al = WebAL.getContext(attrs);
 
-## Supported Devices
+### Supported Devices
 * null: no output or processing (don't query state, it may be wrong)
 * test: full mixing but no output
 * browser: HTML5 Audio - doesn't support dynamic audio or stereo mixing
