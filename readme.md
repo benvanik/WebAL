@@ -113,11 +113,11 @@ For testing purposes you can override the device used for playback in two ways -
     var al = WebAL.getContext(attrs);
 
 ### Supported Devices
-* null: no output or processing (don't query state, it may be wrong)
-* test: full mixing but no output
-* browser: HTML5 Audio - doesn't support dynamic audio or stereo mixing
-* flash: Flash software output
-* native: browser-native audio output (currently only supported on Firefox 4+)
+* `null`: no output or processing (don't query state, it may be wrong)
+* `test`: full mixing but no output
+* `browser`: HTML5 Audio - doesn't support dynamic audio or stereo mixing
+* `flash`: Flash software output
+* `native`: browser-native audio output (currently only supported on Firefox 4+)
 
 sample01 - Playing a Sound
 --------------------
