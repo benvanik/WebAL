@@ -282,15 +282,15 @@
             }
         }
 
+        buffer.frequency = 44100;
+        buffer.originalChannels = buffer.channels = 1;
+        buffer.originalType = buffer.type = al.FLOAT;
+        buffer.bits = 32;
+
+        // Dummy data
+        buffer.data = new WebALFloatArray(4);
+
         function audioLoadedMetadata(e) {
-            buffer.frequency = 44100;
-            buffer.originalChannels = buffer.channels = 1;
-            buffer.originalType = buffer.type = al.FLOAT;
-            buffer.bits = 32;
-
-            // Dummy data
-            buffer.data = new WebALFloatArray(4);
-
             var duration = audio.duration;
             var sampleCount = Math.round(duration * buffer.frequency);
             sampleCount = sampleCount - (sampleCount % 2);
@@ -299,7 +299,7 @@
             buffer._invalidateSources();
         };
 
-        audio.addEventListener("loadedmetadata", audioLoadedMetadata, false);
+        //audio.addEventListener("loadedmetadata", audioLoadedMetadata, false);
 
         audio.load();
 
