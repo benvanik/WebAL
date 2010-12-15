@@ -9,7 +9,7 @@
         this.context.attributes.supportDynamicAudio = true;
         this.context.attributes.supportStereoMixing = true;
 
-        this.audioEl = new Audio();
+        this.audioEl = document.createElement("audio");
         this.audioEl.mozSetup(this.channels, this.frequency);
 
         var sampleCapacity = this.updateSize;
@@ -59,11 +59,9 @@
 
     WebALNativeDevice.detect = function () {
         // Ensure browser supports Audio with the Mozilla writing APIs
-        if (typeof Audio !== "undefined") {
-            var audio = new Audio();
-            if (audio.mozSetup) {
-                return true;
-            }
+        var audio = document.createElement("audio");
+        if (audio && audio.mozSetup) {
+            return true;
         }
         return false;
     };
@@ -81,7 +79,7 @@
         var audio = null;
         if (audioElement instanceof Array) {
             // Audio reference list
-            audio = new Audio();
+            audio = document.createElement("audio");
             for (var n = 0; n < audioElement.length; n++) {
                 var ref = audioElement[n];
                 var source = document.createElement("source");

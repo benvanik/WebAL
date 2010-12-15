@@ -1,16 +1,11 @@
 (function () {
     var exports = window;
 
-    var WebALBrowserMixer = function (context) {
-        this.context = context;
-    };
-
-
     var WebALBrowserAudio = function (audioRef) {
         this.audioRef = audioRef;
     };
     WebALBrowserAudio.prototype.createAudioElement = function () {
-        var audio = new Audio();
+        var audio = document.createElement("audio");
         for (var n = 0; n < this.audioRef.length; n++) {
             var ref = this.audioRef[n];
             var source = document.createElement("source");
@@ -35,10 +30,8 @@
         this.context.attributes.supportDynamicAudio = false;
         this.context.attributes.supportStereoMixing = false;
 
-        this.mixer = new WebALBrowserMixer(context);
-
         // Some browsers don't support 'loop' yet, so fake it
-        this.manualLoop = (new Audio()).loop === undefined;
+        this.manualLoop = (document.createElement("audio")).loop === undefined;
 
         //window.setInterval(function () {
         //self.handleUpdates();
@@ -50,7 +43,8 @@
 
     WebALBrowserDevice.detect = function () {
         // Browser device requries HTML5 audio
-        if (typeof Audio !== "undefined") {
+        var audio = document.createElement("audio");
+        if (audio && audio.play !== undefined) {
             return true;
         } else {
             return false;
@@ -247,7 +241,7 @@
         var audio = null;
         if (audioElement instanceof Array) {
             // Audio reference list
-            audio = new Audio();
+            audio = document.createElement("audio");
             for (var n = 0; n < audioElement.length; n++) {
                 var ref = audioElement[n];
                 var source = document.createElement("source");

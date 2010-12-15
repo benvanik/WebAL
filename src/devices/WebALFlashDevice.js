@@ -79,7 +79,21 @@
 
     WebALFlashDevice.detect = function () {
         // TODO: ensure Flash is enabled/etc
-        return true;
+        try {
+            if (window["ActiveXObject"] !== undefined) {
+                var flashObject = new ActiveXObject('ShockwaveFlash.ShockwaveFlash');
+                if (flashObject) {
+                    return true;
+                }
+            } else {
+                throw "";
+            }
+        } catch (e) {
+            if (navigator.mimeTypes["application/x-shockwave-flash"] !== undefined) {
+                return true;
+            }
+        }
+        return false;
     };
 
     WebALFlashDevice.create = function (context) {
