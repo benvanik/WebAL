@@ -47,6 +47,7 @@ Known Issues/TODO
 * Implement seeking/querying position on sources
 * You must provide both ogg and mp3 sources for your content (may be possible to do ogg decoding in Flash, but that seems hard)
 * The HTML5 Audio output device has some bugs, but mainly because of broken browsers
+* HTML5 Audio device doesn't work on Mobile Safari - looks like you can't create Audio elements from Javascript that play... anyone know a workaround?
 
 Browser Support
 ====================
