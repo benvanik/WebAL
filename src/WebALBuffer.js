@@ -45,9 +45,10 @@
     };
 
     WebALBuffer.prototype._invalidateSources = function () {
+        var device = this.context.device;
         for (var n = 0; n < this.referencingSources.length; n++) {
             var source = this.referencingSources[n];
-            source.needsUpdate = true;
+            device.sourceUpdateRequested(source);
         }
     };
 
@@ -69,6 +70,11 @@
         this._unbindData();
 
         if (!sourceData) {
+            return;
+        }
+
+        if (!this.context.supportDynamicAudio) {
+            al._setError(al.INVALID_OPERATION);
             return;
         }
 

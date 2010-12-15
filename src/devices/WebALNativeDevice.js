@@ -50,7 +50,7 @@
         writeData();
 
         window.setInterval(function () {
-            context._handleUpdates();
+            self.handleUpdates();
 
             writeData();
         }, this.refreshInterval);

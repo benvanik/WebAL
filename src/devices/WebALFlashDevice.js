@@ -166,7 +166,7 @@
             var al = WebAL.getContext();
             var device = al.device;
 
-            al._handleUpdates();
+            device.handleUpdates();
 
             // Demand fill the buffer with samples
             if (device.mixer.fillBuffer(device.buffer, device.sampleCapacity) == false) {

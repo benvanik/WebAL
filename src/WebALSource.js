@@ -92,9 +92,10 @@
         return true;
     };
 
+    // Will return false if another update is required
     WebALSource.prototype._update = function () {
         if (!this.needsUpdate) {
-            return;
+            return true;
         }
         this.needsUpdate = false;
 
@@ -109,9 +110,11 @@
                     this._updateStereo();
                     break;
             }
+            return true;
         } else {
             // No buffers - try later
             this.needsUpdate = true;
+            return false;
         }
     };
 

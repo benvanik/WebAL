@@ -16,7 +16,7 @@
         this.mixer = new WebALSoftwareMixer(context, this);
 
         window.setInterval(function () {
-            context._handleUpdates();
+            self.handleUpdates();
 
             self.mixer.fillBuffer(self.buffer, sampleCapacity);
 

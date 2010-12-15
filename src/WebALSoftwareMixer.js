@@ -174,6 +174,7 @@
         var pos = 0;
         var frac = dataPosFrac;
 
+        // TODO: no allocs
         var dryFilter = source.params.iirFilter;
         var drySend = new Array(MAXCHANNELS);
         for (var c = 0; c < MAXCHANNELS; c++) {
@@ -205,6 +206,7 @@
         var pos = 0;
         var frac = dataPosFrac;
 
+        // TODO: no allocs
         var dryFilter = source.params.iirFilter;
         var drySend = new Array(2);
         drySend[0] = new Array(MAXCHANNELS);

@@ -21,8 +21,6 @@
     var WebALContext = function (attributes) {
         this.attributes = attributes;
 
-        // TODO: query attributes from device?
-
         this.buffers = [];
         this.sources = [];
         this.listener = new WebALListener();
@@ -166,22 +164,6 @@
 
     WebALContext.prototype.getExtension = function (name) {
         return null;
-    };
-
-    WebALContext.prototype._handleUpdates = function () {
-        for (var n = 0; n < this.activeSources.length; n++) {
-            var source = this.activeSources[n];
-            if (source.state != this.PLAYING) {
-                // No longer active
-                this.activeSources.splice(n, 1);
-                n--;
-                continue;
-            }
-
-            if (source.needsUpdate) {
-                source._update();
-            }
-        }
     };
 
     WebALContext.prototype.getError = function () {
@@ -337,10 +319,10 @@
             for (var n = 0; n < this.sources.length; n++) {
                 var source = this.sources[n];
                 if (updateAll) {
-                    source.needsUpdate = true;
+                    this.device.sourceUpdateRequested(source);
                 } else if (updateWorld) {
                     if (source.sourceRelative) {
-                        source.needsUpdate = true;
+                        this.device.sourceUpdateRequested(source);
                     }
                 }
             }
@@ -536,12 +518,12 @@
                 break;
 
             case this.LOOPING:
-                // No update required - the contents aren't changing
                 if (param) {
                     source.looping = true;
                 } else {
                     source.looping = false;
                 }
+                needsUpdate = true;
                 break;
 
             case this.BUFFER:
@@ -585,7 +567,7 @@
         }
 
         if (needsUpdate) {
-            source.needsUpdate = true;
+            this.device.sourceUpdateRequested(source);
         }
     };
 
@@ -664,6 +646,8 @@
             return;
         }
 
+        var oldState = source.state;
+
         // Check that there is a queue containing at least one buffer
         if (source.queue.length == 0) {
             source.state = this.STOPPED;
@@ -671,7 +655,7 @@
             source.dataPosition = 0;
             source.dataPositionFrac = 0;
             source.offset = 0;
-            // TODO: source state set
+            this.device.sourceStateChange(source, oldState, source.state);
             return;
         }
 
@@ -682,7 +666,7 @@
             source.dataPositionFrac = 0;
             source.buffersProcessed = 0;
             source.buffer = source.queue[0];
-            // TODO: source state set
+            this.device.sourceStateChange(source, oldState, source.state);
         } else {
             // Resume
             source.state = this.PLAYING;
@@ -705,10 +689,12 @@
             return;
         }
 
+        var oldState = source.state;
+
         if (source.state != this.INITIAL) {
             source.state = this.STOPPED;
             source.buffersProcessed = source.buffersQueued;
-            // TODO: source state set
+            this.device.sourceStateChange(source, oldState, source.state);
         }
         source.offset = 0;
     };
@@ -719,6 +705,8 @@
             return;
         }
 
+        var oldState = source.state;
+
         if (source.state != this.INITIAL) {
             source.state = this.INITIAL;
             source.dataPosition = 0;
@@ -727,7 +715,7 @@
             if (source.queue.length > 0) {
                 source.buffer = source.queue[0];
             }
-            // TODO: source state set
+            this.device.sourceStateChange(source, oldState, source.state);
         }
         source.offset = 0;
     };
@@ -738,9 +726,11 @@
             return;
         }
 
+        var oldState = source.state;
+
         if (source.state == this.PLAYING) {
             source.state = this.PAUSED;
-            // TODO: source state set
+            this.device.sourceStateChange(source, oldState, source.state);
         }
     };
 
@@ -893,7 +883,7 @@
 
         source.buffersProcessed = 0;
         source.buffer = buffer;
-        source.needsUpdate = true;
+        this.device.sourceUpdateRequested(source);
     };
 
     WebALContext.prototype.sourceQueueBuffers = function (source, buffers) {
@@ -929,7 +919,7 @@
                     return;
                 }
             } else {
-                source.needsUpdate = true;
+                this.device.sourceUpdateRequested(source);
             }
         }
 
