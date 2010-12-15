@@ -103,12 +103,6 @@ To get the best performance you can set several flags indicating whether or not 
     var al = WebAL.getContext(attrs);
 
 For testing purposes you can override the device used for playback in two ways - appending a URL parameter or setting a context attribute.
-Supported devices include:
-* null: no output or processing (don't query state, it may be wrong)
-* test: full mixing but no output
-* browser: HTML5 Audio - doesn't support dynamic audio or stereo mixing
-* flash: Flash software output
-* native: browser-native audio output (currently only supported on Firefox 4+)
     // Runtime override
     http://localhost/sample.html?webal_device=DEVICE
 
@@ -117,6 +111,13 @@ Supported devices include:
         device: "DEVICE"
     };
     var al = WebAL.getContext(attrs);
+
+Supported devices include:
+* null: no output or processing (don't query state, it may be wrong)
+* test: full mixing but no output
+* browser: HTML5 Audio - doesn't support dynamic audio or stereo mixing
+* flash: Flash software output
+* native: browser-native audio output (currently only supported on Firefox 4+)
 
 sample01 - Playing a Sound
 --------------------
