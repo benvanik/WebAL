@@ -187,6 +187,14 @@
                 }
                 break;
         }
+        
+        // Remove from active list if needed
+        if (newState != al.PLAYING) {
+            var index = al.activeSources.indexOf(source);
+            if (index >= 0) {
+                al.activeSources.splice(index, 1);
+            }
+        }
     };
 
     WebALBrowserDevice.prototype.bindSourceBuffer = function (source, buffer) {
@@ -210,6 +218,12 @@
                 }
             } else {
                 source.state = al.STOPPED;
+                
+                // Remove from active list if needed
+                var index = al.activeSources.indexOf(source);
+                if (index >= 0) {
+                    al.activeSources.splice(index, 1);
+                }
             }
         };
         audio.addEventListener("ended", audioEnded, false);
@@ -290,7 +304,9 @@
         // Dummy data
         buffer.data = new WebALFloatArray(4);
 
-        function audioLoadedMetadata(e) {
+        // TODO: hook audio 'error' event and 'canplaythrough' event for error/success
+
+        function audioCanPlay(e) {
             var duration = audio.duration;
             var sampleCount = Math.round(duration * buffer.frequency);
             sampleCount = sampleCount - (sampleCount % 2);
@@ -298,8 +314,7 @@
 
             buffer._invalidateSources();
         };
-
-        //audio.addEventListener("loadedmetadata", audioLoadedMetadata, false);
+        //audio.addEventListener("canplay", audioCanPlay, false);
 
         audio.load();
 
