@@ -129,7 +129,7 @@ For testing purposes you can override the device used for playback in two ways -
 * `flash`: Flash software output
 * `native`: browser-native audio output (currently only supported on Firefox 4+)
 
-sample01 - Playing a Sound
+[sample01 - Playing a Sound](http://benvanik.github.com/WebAL/samples/sample01/)
 --------------------
 There are two primary objects in the OpenAL world - buffers and sources. Buffers are just blobs of sound data and sources are the actual
 emitters that create sound. You can attach one or more buffers to a source and the same buffer can be attached to multiple sources.
@@ -155,7 +155,7 @@ Let's say you want to just load a simple sound to play occasionally:
     // Play the sound
     al.sourcePlay(source);
 
-sample02 - Generating Sound Pt. 1
+[sample02 - Generating Sound Pt. 1](http://benvanik.github.com/WebAL/samples/sample02/)
 --------------------
 If you are generating your own sound in code (via one of the great JS audio libraries out there) you can easily play it:
     // Create the sound data somehow
@@ -177,7 +177,7 @@ Note that this is considered a static buffer (of type al.STATIC). The assumption
 much. If you do, behavior is undefined. This works great when you can generate all your data ahead of time (and it's relatively small),
 but if you are trying to stream larger amounts of audio this method won't work.
 
-sample03 - Generating Sound Pt. 2
+[sample03 - Generating Sound Pt. 2](http://benvanik.github.com/WebAL/samples/sample03/)
 --------------------
 So say you want to actually stream long tracks - this could be dynamic music, synthesized effects, etc. Instead of creating several
 megabytes of sample data (slow) and statically setting it (hanging onto that memory forever), you can use buffer queuing. The idea here
@@ -188,14 +188,14 @@ audio source.
 
 There's a lot of code here - check out sample03 instead.
 
-sample04 - Playing Multiple Sounds
+[sample04 - Playing Multiple Sounds](http://benvanik.github.com/WebAL/samples/sample04/)
 --------------------
 WebAL has a mixer built in - that means that you can play multiple sounds at the same time and they will all be mixed together. Doing this
 is as simple as just calling `al.sourcePlay()` on your sources as you want them to start playing!
 
 Check out the sample for a demonstration of this as well as some examples of querying source states/etc.
 
-sample05 - Positioning Sounds
+[sample05 - Positioning Sounds](http://benvanik.github.com/WebAL/samples/sample05/)
 --------------------
 There are several ways to affect how sounds are heard in WebAL. The two main areas that play a role are the listener and the source.
 
