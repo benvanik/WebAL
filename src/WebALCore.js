@@ -40,7 +40,7 @@
         if (WebAL.sharedContext) {
             return WebAL.sharedContext;
         } else {
-            var attributes = {};
+            var attributes = attributes || {};
 
             // Check the URL for an override on the device
             var query = window.location.search;

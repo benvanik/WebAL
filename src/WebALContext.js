@@ -23,7 +23,7 @@
 
         this.buffers = [];
         this.sources = [];
-        this.listener = new WebALListener();
+        this.listener = new WebALListener(this);
 
         this.activeSources = [];
 
