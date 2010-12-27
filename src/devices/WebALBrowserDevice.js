@@ -6,16 +6,35 @@
     };
     WebALBrowserAudio.prototype.createAudioElement = function () {
         var audio = document.createElement("audio");
+        
+        // Quick scan to see if we have a fully supported type
+        var hasSet = false;
         for (var n = 0; n < this.audioRef.length; n++) {
             var ref = this.audioRef[n];
-            var source = document.createElement("source");
-            source.type = ref.type;
-            source.src = ref.src;
-            audio.appendChild(source);
+            if (audio.canPlayType(ref.type)) {
+                audio.src = ref.src;
+                hasSet = true;
+                break;
+            }
+        }
+        
+        // Otherwise, add all sources
+        if (!hasSet) {
+            for (var n = 0; n < this.audioRef.length; n++) {
+                var ref = this.audioRef[n];
+                var source = document.createElement("source");
+                source.type = ref.type;
+                source.src = ref.src;
+                audio.appendChild(source);
+            }
         }
 
+        // Useful for debugging issues on iOS
+        //document.body.appendChild(audio);
+        //audio.controls = "controls";
+
         // Any settings?
-        audio.load();
+        try { audio.load(); } catch (e) { }
 
         return audio;
     };
@@ -93,7 +112,7 @@
                 finalGain = (Math.abs(leftGain) + Math.abs(rightGain)) / 2.0;
                 break;
         }
-        audio.volume = finalGain;
+        try{ audio.volume = finalGain; } catch (e) { }
     };
 
     WebALBrowserDevice.prototype.sourceStateChange = function (source, oldState, newState) {
@@ -118,11 +137,12 @@
                         // No-op
                         break;
                     case al.PLAYING:
-                        try {
-                            audio.currentTime = 0;
-                            audio.play();
-                        } catch (e) {
-                        }
+                        // This hack is required to get Chrome to play nicely
+                        setTimeout(function() {
+                            try { audio.currentTime = 0; } catch (e) { }
+                            try { audio.play(); } catch (e) { }
+                            try { audio.currentTime = 0; } catch (e) { }
+                        }, 0);
                         break;
                     case al.PAUSED:
                         // Nothing
@@ -135,76 +155,49 @@
             case al.PLAYING:
                 switch (newState) {
                     case al.INITIAL:
-                        try {
-                            audio.pause();
-                            audio.currentTime = 0;
-                        } catch (e) {
-                        }
+                        try { audio.pause(); } catch (e) { }
+                        try { audio.currentTime = 0; } catch (e) { }
                         break;
                     case al.PLAYING:
                         // Restart from beginning
-                        try {
-                            audio.currentTime = 0;
-                        } catch (e) {
-                        }
+                        try { audio.currentTime = 0; } catch (e) { }
                         break;
                     case al.PAUSED:
-                        try {
-                            audio.pause();
-                        } catch (e) {
-                        }
+                        try { audio.pause(); } catch (e) { }
                         break;
                     case al.STOPPED:
-                        try {
-                            audio.pause();
-                            audio.currentTime = 0;
-                        } catch (e) {
-                        }
+                        try { audio.pause(); } catch (e) { }
+                        try { audio.currentTime = 0; } catch (e) { }
                         break;
                 }
                 break;
             case al.PAUSED:
                 switch (newState) {
                     case al.INITIAL:
-                        try {
-                            audio.currentTime = 0;
-                        } catch (e) {
-                        }
+                        try { audio.currentTime = 0; } catch (e) { }
                         break;
                     case al.PLAYING:
-                        try {
-                            audio.play();
-                        } catch (e) {
-                        }
+                        try { audio.play(); } catch (e) { }
                         break;
                     case al.PAUSED:
                         // No-op
                         break;
                     case al.STOPPED:
-                        try {
-                            audio.currentTime = 0;
-                        } catch (e) {
-                        }
+                        try { audio.currentTime = 0; } catch (e) { }
                         break;
                 }
                 break;
             case al.STOPPED:
                 switch (newState) {
                     case al.INITIAL:
-                        try {
-                            audio.currentTime = 0;
-                        } catch (e) {
-                        }
+                        try { audio.currentTime = 0; } catch (e) { }
                         break;
                     case al.PLAYING:
                         // This hack is required to get Chrome to play nicely
                         setTimeout(function() {
-                            try {
-                                audio.currentTime = 0;
-                                audio.play();
-                                audio.currentTime = 0;
-                            } catch (e) {
-                            }
+                            try { audio.currentTime = 0; } catch (e) { }
+                            try { audio.play(); } catch (e) { }
+                            try { audio.currentTime = 0; } catch (e) { }
                         }, 0);
                         break;
                     case al.PAUSED:
@@ -273,7 +266,7 @@
 
         // Unload?
         // TODO: kill somehow
-        audio.pause();
+        try { audio.pause(); } catch (e) { }
     };
 
     WebALBrowserDevice.prototype.setupAudioBuffer = function (buffer, audioElement, streaming) {
