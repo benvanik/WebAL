@@ -5,11 +5,10 @@
     <script type="text/javascript" src="../../lib/WebAL-debug.js"></script>
     <script type="text/javascript">
         function DocumentLoaded() {
-            var al = WebAL.getContext();
-            //var al = WebAL.getContext({
-            //    supportDynamicAudio: false,
-            //    supportStereoMixing: false
-            //});
+            var al = WebAL.getContext({
+                supportDynamicAudio: false,
+                supportStereoMixing: false
+            });
 
             // Use the browser to load the audio
             var audioRef = [
@@ -25,12 +24,16 @@
             var source = al.createSource();
             al.sourceBuffer(source, buffer);
             al.sourceParameter(source, al.LOOPING, true);
-
-            // Start playback (looping)
-            al.sourcePlay(source);
+            
+            function playClicked() {
+                // Start playback (looping)
+                al.sourcePlay(source);
+            };
+            document.getElementById("playButton").onclick = playClicked;
         };
     </script>
 </head>
 <body onload="DocumentLoaded();">
+    <input id="playButton" type="button" value="Play">
 </body>
 </html>
