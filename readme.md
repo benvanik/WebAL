@@ -55,11 +55,20 @@ Currently only Firefox 4 provides an API that allows for this project to work 10
 more complex (and nasty) higher-level APIs that it may be possible to emulate this on top of, but I haven't looked into it yet. When not running
 in Firefox 4, a small Flash app will be used to do the sound writing only, with all the rest remaining in pure Javascript.
 
-When Flash is not supported (such as on iOS) HTML5 Audio will be used. This uses the browser to do the playback but has some limitations - for
+When Flash is not supported HTML5 Audio will be used. This uses the browser to do the playback but has some limitations - for
 example, you can position sounds in 3D but the output will be as if they were mixed in mono (volume only adjustment, no panning). The browsers
 all have issues with some of the more stressful scenarios, such as rapidly playing back the same sound or seeking quickly. Finally, there is
 a per-source Audio element created which if the browsers aren't reusing resources (I doubt they are) can quickly blow up memory and bring the
 browser down.
+
+Mobile Safari on iOS has many limitations in its implementation of HTML5 Audio. Because of this I'm not really supporting it yet. Some of the
+major ones are lack of preloading, no simultaneous audio playback, and no volume control. When these restrictions are lifted things should work.
+
+Unless required, disable dynamic audio and stereo mixing - this will allow the most efficient device implementation to be used and yield the best performance.
+    var al = WebAL.getContext({
+        supportDynamicAudio: false,
+        supportStereoMixing: false
+    });
 
 Design
 ====================
@@ -78,7 +87,7 @@ Getting Started
 
 Creating a Context
 --------------------
-There is a shared WebALContext per document. You can cache the context or make the call to retreive it as much as you want.
+There is a shared WebALContext per document. You can cache the context or make the call to retrieve it as much as you want.
     var al = WebAL.getContext();
 
 Optionally you can pass an object defining a set of attributes to request from the device implementation. Use `getContextAttributes()`
