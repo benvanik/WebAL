@@ -111,13 +111,6 @@
         }
         var audio = source.audioElements[buffer.id];
 
-        function setTime(time) {
-            try {
-                audio.currentTime = 0;
-            } catch (e) {
-            }
-        };
-
         switch (oldState) {
             case al.INITIAL:
                 switch (newState) {
@@ -125,8 +118,11 @@
                         // No-op
                         break;
                     case al.PLAYING:
-                        audio.play();
-                        setTime(0);
+                        try {
+                            audio.currentTime = 0;
+                            audio.play();
+                        } catch (e) {
+                        }
                         break;
                     case al.PAUSED:
                         // Nothing
@@ -139,45 +135,77 @@
             case al.PLAYING:
                 switch (newState) {
                     case al.INITIAL:
-                        setTime(0);
-                        audio.pause();
+                        try {
+                            audio.pause();
+                            audio.currentTime = 0;
+                        } catch (e) {
+                        }
                         break;
                     case al.PLAYING:
                         // Restart from beginning
-                        setTime(0);
+                        try {
+                            audio.currentTime = 0;
+                        } catch (e) {
+                        }
                         break;
                     case al.PAUSED:
-                        audio.pause();
+                        try {
+                            audio.pause();
+                        } catch (e) {
+                        }
                         break;
                     case al.STOPPED:
-                        setTime(0);
-                        audio.pause();
+                        try {
+                            audio.pause();
+                            audio.currentTime = 0;
+                        } catch (e) {
+                        }
                         break;
                 }
                 break;
             case al.PAUSED:
                 switch (newState) {
                     case al.INITIAL:
-                        setTime(0);
+                        try {
+                            audio.currentTime = 0;
+                        } catch (e) {
+                        }
                         break;
                     case al.PLAYING:
-                        audio.play();
+                        try {
+                            audio.play();
+                        } catch (e) {
+                        }
                         break;
                     case al.PAUSED:
                         // No-op
                         break;
                     case al.STOPPED:
-                        setTime(0);
+                        try {
+                            audio.currentTime = 0;
+                        } catch (e) {
+                        }
                         break;
                 }
                 break;
             case al.STOPPED:
                 switch (newState) {
                     case al.INITIAL:
-                        setTime(0);
+                        try {
+                            audio.currentTime = 0;
+                        } catch (e) {
+                        }
                         break;
                     case al.PLAYING:
-                        audio.play();
+                        // This hack is required to get Chrome to play nicely
+                        setTimeout(function() {
+                            try {
+                                audio.currentTime = 0;
+                                audio.play();
+                                audio.currentTime = 0;
+                            } catch (e) {
+                            }
+                        }, 0);
                         break;
                     case al.PAUSED:
                         break;
