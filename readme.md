@@ -150,7 +150,7 @@ Let's say you want to just load a simple sound to play occasionally:
 
     // Create the audio source and associate the buffer with it
     var source = al.createSource();
-    source.sourceBuffer(source, buffer);
+    al.sourceBuffer(source, buffer);
 
     // ... at some point in the future ...
 
