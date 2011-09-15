@@ -65,6 +65,7 @@ Mobile Safari on iOS has many limitations in its implementation of HTML5 Audio. 
 major ones are lack of preloading, no simultaneous audio playback, and no volume control. When these restrictions are lifted things should work.
 
 Unless required, disable dynamic audio and stereo mixing - this will allow the most efficient device implementation to be used and yield the best performance.
+
     var al = WebAL.getContext({
         supportDynamicAudio: false,
         supportStereoMixing: false
@@ -88,10 +89,12 @@ Getting Started
 Creating a Context
 --------------------
 There is a shared WebALContext per document. You can cache the context or make the call to retrieve it as much as you want.
+
     var al = WebAL.getContext();
 
 Optionally you can pass an object defining a set of attributes to request from the device implementation. Use `getContextAttributes()`
 after creation to query the values actually used by the underlying implementation (which may differ from the ones you asked for).
+
     var attrs = {
         // Frequency for mixing output buffer, in units of Hz
         frequency: 44100,
@@ -101,9 +104,11 @@ after creation to query the values actually used by the underlying implementatio
         channels: 2
     };
     var al = WebAL.getContext(attrs);
+
 Note that only the first call to `getContext` will use the attributes - after that they are ignored.
 
 To get the best performance you can set several flags indicating whether or not you want support for certain features.
+
     var attrs = {
         // If you will only be providing URLs and not dynamically filling buffers, disable dynamic audio
         supportDynamicAudio: false,
@@ -113,6 +118,7 @@ To get the best performance you can set several flags indicating whether or not 
     var al = WebAL.getContext(attrs);
 
 For testing purposes you can override the device used for playback in two ways - appending a URL parameter or setting a context attribute.
+
     // Runtime override
     http://localhost/sample.html?webal_device=DEVICE
 
@@ -137,6 +143,7 @@ There are two primary objects in the OpenAL world - buffers and sources. Buffers
 emitters that create sound. You can attach one or more buffers to a source and the same buffer can be attached to multiple sources.
 
 Let's say you want to just load a simple sound to play occasionally:
+
     // Create an audio reference
     // Note that to support all browsers we must provide both ogg and mp3 versions of the content
     var audioRef = [
@@ -162,6 +169,7 @@ Let's say you want to just load a simple sound to play occasionally:
 Click to view: [sample02](http://benvanik.github.com/WebAL/samples/sample02/)
 
 If you are generating your own sound in code (via one of the great JS audio libraries out there) you can easily play it:
+
     // Create the sound data somehow
     var data = new Float32Array(...);
 
@@ -174,6 +182,7 @@ If you are generating your own sound in code (via one of the great JS audio libr
     var source = al.createSource();
     al.sourceBuffer(source, buffer);
     al.sourcePlay(source);
+
 You can provide your audio data in many formats, but try to always pass the data array in as a Typed Array for performance reasons.
 Valid formats are FORMAT_MONO8, FORMAT_MONO16, FORMAT_MONO_FLOAT32, FORMAT_STEREO8, FORMAT_STEREO16, and FORMAT_STEREO_FLOAT32.
 
@@ -211,6 +220,7 @@ There are several ways to affect how sounds are heard in WebAL. The two main are
 
 The listener is defined as having a position in 3D space that represents the destination for all sounds. You can set the gain (volume),
 position, orientation, and velocity like such:
+
     // GAIN is a [0-1] range where 0 is muted and 1 is max
     al.listenerParameter(al.GAIN, 0.5);
     // POSITION is an XYZ position in scene space
@@ -224,6 +234,7 @@ position, orientation, and velocity like such:
     ]);
 
 Sound sources also have a variety of parameters that allow you to affect how the listener hears them:
+
     // GAIN is a [0-1] range where 0 is muted and 1 is max
     al.sourceParameter(source, al.GAIN, 0.5);
     // PITCH is a pitch multiplier
